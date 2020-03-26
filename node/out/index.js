@@ -42,23 +42,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var services_1 = require("@jupyterlab/services");
 var path = __importStar(require("path"));
+var kernel_1 = require("./kernel");
 var kernelspec_1 = require("./kernelspec");
 var session_1 = require("./session");
 var utils = __importStar(require("./utils"));
 var consts_1 = require("./consts");
-var Handler;
-(function (Handler) {
-    Handler.onReply = function (reply) {
-        console.log("TCL: reply", reply);
-    };
-    Handler.onIOPub = function (msg) {
-        console.log("TCL: msg type", msg.header.msg_type);
-        console.log("TCL: msg content", msg.content);
-    };
-})(Handler || (Handler = {}));
+var express_1 = __importDefault(require("express"));
 var testNotebook = path.join(consts_1.NOTEBOOK_PATH, 'test1.ipynb');
 var testKernelName = 'python';
 var testCode = '1 + 1';
@@ -71,40 +66,81 @@ var options = {
         name: testKernelName
     }
 };
-// kernel
-var kernelManager = new services_1.KernelManager();
-var sessionManager = new services_1.SessionManager({ kernelManager: kernelManager });
 // session
 var session;
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var future;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0: return [4 /*yield*/, kernelspec_1.getKernelSpecsList()];
+    var app, port;
+    return __generator(this, function (_a) {
+        app = express_1.default();
+        port = 8080;
+        app.use(express_1.default.json());
+        // set new session
+        app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, init()];
+                    case 1:
+                        _a.sent();
+                        res.end();
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        // run cell
+        app.post('/cell/run-cell', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+            var msgList, replyList, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        msgList = [];
+                        replyList = [];
+                        _a = session;
+                        if (!_a) return [3 /*break*/, 2];
+                        return [4 /*yield*/, kernel_1.executeCode(session, req.body.code, function (msg) {
+                                msgList.push(msg);
+                            }, function (reply) {
+                                replyList.push(reply);
+                            })];
+                    case 1:
+                        _a = (_b.sent());
+                        _b.label = 2;
+                    case 2:
+                        _a;
+                        res.send(JSON.stringify({ status: 'ok', data: { msgList: msgList, replyList: replyList } }));
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        // shutdown session
+        app.get('/session/shutdown', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                session && session_1.shutdown(session);
+                res.end();
+                return [2 /*return*/];
+            });
+        }); });
+        app.listen(port, function () {
+            console.log("API: http://localhost:" + port);
+        });
+        return [2 /*return*/];
+    });
+}); };
+main();
+var init = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var kernelManager, sessionManager;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                kernelManager = new services_1.KernelManager();
+                sessionManager = new services_1.SessionManager({ kernelManager: kernelManager });
+                return [4 /*yield*/, kernelspec_1.getKernelSpecsList()];
             case 1:
-                _b.sent();
+                _a.sent();
                 return [4 /*yield*/, session_1.startNew(options, sessionManager)];
             case 2:
-                session = _b.sent();
-                if (!session)
-                    return [2 /*return*/];
-                future = (_a = session.kernel) === null || _a === void 0 ? void 0 : _a.requestExecute({ code: testCode });
-                if (!future) return [3 /*break*/, 4];
-                future.onIOPub = Handler.onIOPub;
-                future.onReply = Handler.onReply;
-                return [4 /*yield*/, future.done.catch(function (e) {
-                        console.error(e);
-                        session && session_1.shutdown(session, 1);
-                    })];
-            case 3:
-                _b.sent();
-                _b.label = 4;
-            case 4:
-                session_1.shutdown(session);
+                session = _a.sent();
                 return [2 /*return*/];
         }
     });
 }); };
-main();
 //# sourceMappingURL=index.js.map

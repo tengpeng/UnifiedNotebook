@@ -8,7 +8,6 @@ export const startNew = (options: Session.ISessionOptions, sessionManager: Sessi
         return undefined
     })
 }
-export const shutdown = (session: Session.ISessionConnection, type: number = 0) => {
+export const shutdown = (session: Session.ISessionConnection) => {
     session.shutdown()
-    process.exit(type)
 }

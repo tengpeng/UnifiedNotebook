@@ -8,9 +8,7 @@ exports.startNew = function (options, sessionManager) {
         return undefined;
     });
 };
-exports.shutdown = function (session, type) {
-    if (type === void 0) { type = 0; }
+exports.shutdown = function (session) {
     session.shutdown();
-    process.exit(type);
 };
 //# sourceMappingURL=session.js.map

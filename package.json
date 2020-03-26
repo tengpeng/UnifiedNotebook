@@ -1,14 +1,16 @@
 {
   "scripts": {
-    "watch": "del ./out/**/* && tsc -w",
+    "watch": "del ./node/out/**/* && tsc --build ./node/tsconfig.json -w",
     "dev": "python3 ./main.py"
   },
   "dependencies": {
     "@jupyterlab/services": "^5.0.2",
+    "express": "^4.17.1",
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.6",
+    "@types/express": "^4.17.3",
     "@types/fs-extra": "^8.1.0",
     "bunyan": "^1.8.12",
     "del-cli": "^3.0.0",
