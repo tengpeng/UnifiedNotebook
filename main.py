@@ -1,13 +1,10 @@
-# Copyright (c) Jupyter Development Team.
-# Distributed under the terms of the Modified BSD License.
-
 from __future__ import print_function, absolute_import
 import json
-import os
-from jupyterlab.process import which
-from jupyterlab.process_app import ProcessApp
+import os.path as osp
+from jupyterlab_server.process import which
+from jupyterlab_server.process_app import ProcessApp
 
-HERE = os.path.dirname(os.path.realpath(__file__))
+HERE = osp.dirname(osp.realpath(__file__))
 
 
 class NodeApp(ProcessApp):
@@ -18,11 +15,12 @@ class NodeApp(ProcessApp):
         # Run the node script with command arguments.
         config = dict(baseUrl=self.connection_url, token=self.token)
 
-        with open('config.json', 'w') as fid:
+        with open(osp.join(HERE, 'config.json'), 'w') as fid:
             json.dump(config, fid)
 
         cmd = [which('nodemon'), '-w', './node/out', '--exec', which('node'), './node/out/index.js', '--jupyter-config-data=./config.json']
-        # cmd = [which('node'), './out/index.js', '--jupyter-config-data=./config.json']
+        # cmd = [which('node'),
+        #        'index.js', '--jupyter-config-data=./config.json']
         return cmd, dict(cwd=HERE)
 
 
