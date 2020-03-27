@@ -54,6 +54,7 @@ var session_1 = require("./session");
 var utils = __importStar(require("./utils"));
 var consts_1 = require("./consts");
 var express_1 = __importDefault(require("express"));
+var cors_1 = __importDefault(require("cors"));
 var testNotebook = path.join(consts_1.NOTEBOOK_PATH, 'test1.ipynb');
 var testKernelName = 'python';
 var testCode = '1 + 1';
@@ -73,6 +74,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         app = express_1.default();
         port = 8080;
+        app.use(cors_1.default());
         app.use(express_1.default.json());
         // set new session
         app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
@@ -81,7 +83,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                     case 0: return [4 /*yield*/, init()];
                     case 1:
                         _a.sent();
-                        res.end();
+                        res.end(JSON.stringify({ status: 'ok', data: {} }));
                         return [2 /*return*/];
                 }
             });

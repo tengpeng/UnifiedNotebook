@@ -6,6 +6,7 @@ import { startNew, shutdown } from './session'
 import * as utils from './utils'
 import { NOTEBOOK_PATH } from './consts'
 import express from 'express'
+import cors from 'cors'
 
 const testNotebook = path.join(NOTEBOOK_PATH, 'test1.ipynb')
 const testKernelName = 'python'
@@ -28,11 +29,12 @@ const main = async () => {
     const app = express()
     const port = 8080
 
+    app.use(cors())
     app.use(express.json())
     // set new session
     app.get('/', async (req, res) => {
         await init()
-        res.end()
+        res.end(JSON.stringify({ status: 'ok', data: {} }))
     })
     // run cell
     app.post('/cell/run-cell', async (req, res) => {
