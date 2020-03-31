@@ -1,12 +1,14 @@
 import { Session, SessionManager, KernelManager, KernelMessage, Kernel } from '@jupyterlab/services'
 import * as path from 'path'
-import { executeCode } from './kernel'
-import { getKernelSpecsList } from './kernelspec'
-import { startNew, shutdown } from './session'
 import * as utils from './utils'
 import { NOTEBOOK_PATH } from './consts'
 import express from 'express'
 import cors from 'cors'
+import { NBSocket } from './socket'
+import { NBSessionManager } from './session-manager'
+import { NBKernel } from './kernel'
+import type { INBSessionManager } from './session-manager'
+import type { INBKernel } from './kernel'
 
 const testNotebook = path.join(NOTEBOOK_PATH, 'test1.ipynb')
 const testKernelName = 'python'
@@ -22,48 +24,54 @@ let options: Session.ISessionOptions = {
     }
 }
 
-// session
-let session: Session.ISessionConnection | undefined;
+// sessionManager
+let sessionManager: INBSessionManager | undefined
+let kernel: INBKernel | undefined
 
 const main = async () => {
     const app = express()
     const port = 8080
 
+    // socketIO
+    let nbSocket = new NBSocket().createSocketServer(app, 80)
+    nbSocket.io?.on('connection', (socket: SocketIO.Socket) => {
+        socket.emit('socketID', socket.client.id)
+        // start session
+        socket.on('session:start', async () => {
+            console.log("TCL: main -> session:start")
+            sessionManager = await new NBSessionManager().startNewSession(options)
+            socket.emit('session:start:success')
+            if (sessionManager?.session) {
+                kernel = new NBKernel(sessionManager.session)
+            }
+        })
+        // run code
+        socket.on('session:runcell', async (code) => {
+            console.log("TCL: main -> session:runcell")
+            kernel?.execute(code, msg => {
+                socket.emit('session:runcell:success', msg)
+            })
+        })
+    })
+
+    // express middleware
     app.use(cors())
     app.use(express.json())
-    // set new session
-    app.get('/', async (req, res) => {
-        await init()
-        res.end(JSON.stringify({ status: 'ok', data: {} }))
-    })
-    // run cell
-    app.post('/cell/run-cell', async (req, res) => {
-        let msgList: Array<KernelMessage.IIOPubMessage> = []
-        let replyList: Array<KernelMessage.IShellControlMessage> = []
-        session && await executeCode(session, req.body.code, (msg) => {
-            msgList.push(msg)
-        }, (reply) => {
-            replyList.push(reply)
-        })
-        res.send(JSON.stringify({ status: 'ok', data: { msgList, replyList } }))
-    })
-    // shutdown session
-    app.get('/session/shutdown', async (req, res) => {
-        session && shutdown(session)
-        res.end()
-    })
+
+    // // run cell
+    // app.post('/cell/run-cell', async (req, res) => {
+    //     let msgList: Array<KernelMessage.IIOPubMessage> = []
+    //     let replyList: Array<KernelMessage.IShellControlMessage> = []
+    //     session && await executeCode(session, req.body.code, (msg) => {
+    //         msgList.push(msg)
+    //     }, reply => {
+    //         replyList.push(reply)
+    //     })
+    //     res.send(JSON.stringify({ status: 'ok', data: { msgList, replyList } }))
+    // })
 
     app.listen(port, () => {
         console.log(`API: http://localhost:${port}`)
     })
 }
 main()
-
-const init = async () => {
-    // kernel
-    const kernelManager = new KernelManager()
-    const sessionManager = new SessionManager({ kernelManager })
-
-    await getKernelSpecsList()
-    session = await startNew(options, sessionManager)
-}

@@ -6,7 +6,7 @@ import { styled } from "baseui";
 import Content from "./layout/content";
 import Cell from "./components/cell";
 import Toolbar from "./components/toolbar";
-import * as api from "./api";
+import io from "socket.io-client";
 
 const Centered = styled("div", {
   display: "flex",
@@ -20,15 +20,17 @@ export default function App() {
   const [cellList, setCellList] = useState([1]);
 
   useEffect(() => {
-    document.title = "kernel connecting...";
-    fetch(api.init)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "ok") {
-          document.title = "kernel connected";
-          setConnection(true);
-        }
-      });
+    // socketio
+    let socket = io("http://localhost:80", { reconnection: true });
+    socket.on('socketID', (id: string) => {
+      console.log("TCL: App -> socketID", id)
+      socket.emit('session:start')
+      document.title = "kernel connecting...";
+    })
+    socket.on('session:start:success', () => {
+      document.title = "kernel connected";
+      setConnection(true);
+    })
   });
 
   const onAddCell = () => {
@@ -59,10 +61,10 @@ export default function App() {
       {connection ? (
         getContent()
       ) : (
-        <Centered>
-          <Spinner />
-        </Centered>
-      )}
+          <Centered>
+            <Spinner />
+          </Centered>
+        )}
     </div>
   );
 }

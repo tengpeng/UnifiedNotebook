@@ -46,15 +46,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var services_1 = require("@jupyterlab/services");
 var path = __importStar(require("path"));
-var kernel_1 = require("./kernel");
-var kernelspec_1 = require("./kernelspec");
-var session_1 = require("./session");
 var utils = __importStar(require("./utils"));
 var consts_1 = require("./consts");
 var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
+var socket_1 = require("./socket");
+var session_manager_1 = require("./session-manager");
+var kernel_1 = require("./kernel");
 var testNotebook = path.join(consts_1.NOTEBOOK_PATH, 'test1.ipynb');
 var testKernelName = 'python';
 var testCode = '1 + 1';
@@ -67,60 +66,60 @@ var options = {
         name: testKernelName
     }
 };
-// session
-var session;
+// sessionManager
+var sessionManager;
+var kernel;
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port;
-    return __generator(this, function (_a) {
+    var app, port, nbSocket;
+    var _a;
+    return __generator(this, function (_b) {
         app = express_1.default();
         port = 8080;
+        nbSocket = new socket_1.NBSocket().createSocketServer(app, 80);
+        (_a = nbSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
+            socket.emit('socketID', socket.client.id);
+            // start session
+            socket.on('session:start', function () { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            console.log("TCL: main -> session:start");
+                            return [4 /*yield*/, new session_manager_1.NBSessionManager().startNewSession(options)];
+                        case 1:
+                            sessionManager = _a.sent();
+                            socket.emit('session:start:success');
+                            if (sessionManager === null || sessionManager === void 0 ? void 0 : sessionManager.session) {
+                                kernel = new kernel_1.NBKernel(sessionManager.session);
+                            }
+                            return [2 /*return*/];
+                    }
+                });
+            }); });
+            // run code
+            socket.on('session:runcell', function (code) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log("TCL: main -> session:runcell");
+                    kernel === null || kernel === void 0 ? void 0 : kernel.execute(code, function (msg) {
+                        socket.emit('session:runcell:success', msg);
+                    });
+                    return [2 /*return*/];
+                });
+            }); });
+        });
+        // express middleware
         app.use(cors_1.default());
         app.use(express_1.default.json());
-        // set new session
-        app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, init()];
-                    case 1:
-                        _a.sent();
-                        res.end(JSON.stringify({ status: 'ok', data: {} }));
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-        // run cell
-        app.post('/cell/run-cell', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-            var msgList, replyList, _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        msgList = [];
-                        replyList = [];
-                        _a = session;
-                        if (!_a) return [3 /*break*/, 2];
-                        return [4 /*yield*/, kernel_1.executeCode(session, req.body.code, function (msg) {
-                                msgList.push(msg);
-                            }, function (reply) {
-                                replyList.push(reply);
-                            })];
-                    case 1:
-                        _a = (_b.sent());
-                        _b.label = 2;
-                    case 2:
-                        _a;
-                        res.send(JSON.stringify({ status: 'ok', data: { msgList: msgList, replyList: replyList } }));
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-        // shutdown session
-        app.get('/session/shutdown', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                session && session_1.shutdown(session);
-                res.end();
-                return [2 /*return*/];
-            });
-        }); });
+        // // run cell
+        // app.post('/cell/run-cell', async (req, res) => {
+        //     let msgList: Array<KernelMessage.IIOPubMessage> = []
+        //     let replyList: Array<KernelMessage.IShellControlMessage> = []
+        //     session && await executeCode(session, req.body.code, (msg) => {
+        //         msgList.push(msg)
+        //     }, reply => {
+        //         replyList.push(reply)
+        //     })
+        //     res.send(JSON.stringify({ status: 'ok', data: { msgList, replyList } }))
+        // })
         app.listen(port, function () {
             console.log("API: http://localhost:" + port);
         });
@@ -128,21 +127,4 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
     });
 }); };
 main();
-var init = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var kernelManager, sessionManager;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                kernelManager = new services_1.KernelManager();
-                sessionManager = new services_1.SessionManager({ kernelManager: kernelManager });
-                return [4 /*yield*/, kernelspec_1.getKernelSpecsList()];
-            case 1:
-                _a.sent();
-                return [4 /*yield*/, session_1.startNew(options, sessionManager)];
-            case 2:
-                session = _a.sent();
-                return [2 /*return*/];
-        }
-    });
-}); };
 //# sourceMappingURL=index.js.map

@@ -17,6 +17,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
+    "socket.io-client": "^2.3.0",
     "styletron-engine-atomic": "^1.4.6",
     "styletron-react": "^5.2.7",
     "typescript": "^3.8.3"
@@ -41,5 +42,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/socket.io-client": "^1.4.32"
   }
 }

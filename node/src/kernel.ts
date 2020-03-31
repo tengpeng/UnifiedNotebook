@@ -1,25 +1,62 @@
-import { Session, SessionManager, KernelManager, KernelMessage } from '@jupyterlab/services'
 import { createLogger } from 'bunyan'
-const log = createLogger({ name: 'kernel' })
 
-interface IOPubHandler {
-    (msg: KernelMessage.IIOPubMessage): void
+import type { Session, KernelMessage } from "@jupyterlab/services";
+
+const log = createLogger({ name: 'Kernel' })
+
+type ResultsCallback = {
+    (message: KernelMessage.IMessage): void
 }
-interface ReplyHandler {
-    (reply: KernelMessage.IShellControlMessage): void
+
+export interface INBKernel {
+    interrupt(): void
+    shutdown(): void
+    restart(): void
+    execute(code: string, onResults: ResultsCallback): void
+    destroy(): void
 }
 
-export const executeCode = async (session: Session.ISessionConnection, code: string, onIOPub: IOPubHandler, onReply: ReplyHandler) => {
-    log.info('Execute code')
-    if (!session) log.error('No active session')
+export class NBKernel implements INBKernel {
+    session: Session.ISessionConnection;
 
-    let future = session.kernel?.requestExecute({ code })
+    constructor(
+        session: Session.ISessionConnection
+    ) {
+        this.session = session;
+        this.session.statusChanged.connect(() => { });
+    }
 
-    if (future) {
-        future.onIOPub = onIOPub
-        future.onReply = onReply
-        return future.done.catch(e => {
-            log.error(e)
-        })
+    interrupt() {
+        this.session.kernel?.interrupt();
+    }
+
+    shutdown() {
+        this.session.kernel?.shutdown();
+    }
+
+    restart(onRestarted?: Function) {
+        const future = this.session.kernel?.restart();
+        future && future.then(() => {
+            if (onRestarted) onRestarted();
+        });
+    }
+
+    execute(code: string, onResults: ResultsCallback) {
+        const future = this.session.kernel?.requestExecute({ code });
+        if (future) {
+            future.onIOPub = message => {
+                log.info("WSKernel: execute:", message);
+                onResults(message);
+            };
+
+            future.onReply = message => onResults(message);
+            future.onStdin = message => onResults(message);
+        }
+    }
+
+    destroy() {
+        log.info("WSKernel: destroying jupyter-js-services Session");
+        this.session.dispose();
     }
 }
+

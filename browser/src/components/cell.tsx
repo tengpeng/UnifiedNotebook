@@ -3,39 +3,45 @@ import { useState } from "react";
 import { Card, StyledBody, StyledAction } from "baseui/card";
 import { Button } from "baseui/button";
 import { Textarea } from "baseui/textarea";
-import * as api from "../api";
+import io from "socket.io-client";
 
 export default () => {
   const [value, setValue] = useState("");
   const [result, setResult] = useState("");
 
   const runCell = (value: string) => {
-    fetch(api.runcell, {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ code: value })
+    // socketio
+    let socket = io("http://localhost:80", { reconnection: true });
+    socket.emit('session:runcell', value)
+    socket.on('session:runcell:success', (msg: any) => {
+      console.log("TCL: runCell -> msg", msg)
     })
-      .then(res => res.json())
-      .then((res: any) => {
-        if (res.status !== "ok") return;
+    // fetch(api.runcell, {
+    //   method: "post",
+    //   headers: {
+    //     "Content-Type": "application/json"
+    //   },
+    //   body: JSON.stringify({ code: value })
+    // })
+    //   .then(res => res.json())
+    //   .then((res: any) => {
+    //     if (res.status !== "ok") return;
 
-        let result = "";
-        res.data.msgList.forEach((msg: any) => {
-          let type = msg.msg_type;
-          let content = msg.content;
-          switch (type) {
-            case "execute_result":
-              result = content.data["text/plain"];
-              break;
-            case "stream":
-              result = content.text;
-              break;
-          }
-        });
-        setResult(result);
-      });
+    //     let result = "";
+    //     res.data.msgList.forEach((msg: any) => {
+    //       let type = msg.msg_type;
+    //       let content = msg.content;
+    //       switch (type) {
+    //         case "execute_result":
+    //           result = content.data["text/plain"];
+    //           break;
+    //         case "stream":
+    //           result = content.text;
+    //           break;
+    //       }
+    //     });
+    //     setResult(result);
+    //   });
   };
 
   return (
