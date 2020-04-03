@@ -1,66 +1,90 @@
 import * as React from "react";
-import { useState } from "react";
-import { Card, StyledBody, StyledAction } from "baseui/card";
-import { Button } from "baseui/button";
-import { Textarea } from "baseui/textarea";
 import io from "socket.io-client";
+import { ICellViewModel, CellState } from '../types'
+import { MultilineString, ICodeCell } from '@jupyterlab/nbformat'
+import { Message } from '../Message'
+import { CellInput } from './cellInput'
+import { CellOutput } from './cellOutput'
 
-export default () => {
-  const [value, setValue] = useState("");
-  const [result, setResult] = useState("");
+interface ICellProps {
+  cellVM: ICellViewModel,
+  onChange(ev: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel): void
+}
 
-  const runCell = (value: string) => {
+export default class Cell extends React.Component<ICellProps> {
+  private message: Message
+
+  constructor(props: ICellProps) {
+    super(props)
+    this.message = new Message()
+  }
+
+  private getCodeCell = () => {
+    return this.props.cellVM.cell.data as ICodeCell;
+  };
+
+  private getCell = () => {
+    return this.props.cellVM.cell;
+  };
+
+  private isCodeCell = () => {
+    return this.props.cellVM.cell.data.cell_type === 'code';
+  };
+
+  private isMarkdownCell = () => {
+    return this.props.cellVM.cell.data.cell_type === 'markdown';
+  };
+
+  private hasOutput = () => {
+    return this.getCell().state === CellState.finished || this.getCell().state === CellState.error || this.getCell().state === CellState.executing;
+  };
+
+  private renderOutput = (): JSX.Element | null => {
+    if (this.shouldRenderOutput()) {
+      return (
+        <div>
+          <CellOutput
+            cellVM={this.props.cellVM}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
+  private shouldRenderOutput(): boolean {
+    if (this.isCodeCell()) {
+      const cell = this.getCodeCell();
+      // return this.hasOutput() && cell.outputs && !this.props.cellVM.hideOutput && Array.isArray(cell.outputs) && cell.outputs.length !== 0;
+      return this.hasOutput() && cell.outputs && Array.isArray(cell.outputs) && cell.outputs.length !== 0;
+    } else if (this.isMarkdownCell()) {
+      // todo
+      // return !this.isShowingMarkdownEditor();
+    }
+    return false;
+  }
+
+  public runCell(value: MultilineString) {
     // socketio
     let socket = io("http://localhost:80", { reconnection: true });
     socket.emit('session:runcell', value)
     socket.on('session:runcell:success', (msg: any) => {
       console.log("TCL: runCell -> msg", msg)
+      this.message.handleIOPub(msg, this.props.cellVM.cell)
     })
-    // fetch(api.runcell, {
-    //   method: "post",
-    //   headers: {
-    //     "Content-Type": "application/json"
-    //   },
-    //   body: JSON.stringify({ code: value })
-    // })
-    //   .then(res => res.json())
-    //   .then((res: any) => {
-    //     if (res.status !== "ok") return;
+  }
 
-    //     let result = "";
-    //     res.data.msgList.forEach((msg: any) => {
-    //       let type = msg.msg_type;
-    //       let content = msg.content;
-    //       switch (type) {
-    //         case "execute_result":
-    //           result = content.data["text/plain"];
-    //           break;
-    //         case "stream":
-    //           result = content.text;
-    //           break;
-    //       }
-    //     });
-    //     setResult(result);
-    //   });
-  };
+  public render() {
+    return (
+      <div>
+        <CellInput cellVM={this.props.cellVM} onCodeChange={(ev) => this.props.onChange(ev, this.props.cellVM)} />
+        <br />
+        {this.renderOutput()}
+        <br />
+        <button onClick={() => { this.runCell(this.props.cellVM.cell.data.source) }}>run cell</button>
+      </div>
+    );
+  }
 
-  return (
-    <Card overrides={{ Root: { style: { width: "100%" } } }}>
-      <StyledBody>
-        <Textarea
-          value={value}
-          onChange={e => setValue(e.currentTarget.value)}
-        />
-      </StyledBody>
-      <StyledAction>
-        <Button
-          overrides={{ BaseButton: { style: { width: "100%" } } }}
-          onClick={runCell.bind(null, value, setResult)}
-        >
-          run cell
-        </Button>
-      </StyledAction>
-      {result ? <pre>{result}</pre> : ""}
-    </Card>
-  );
-};
+}
+
