@@ -11,7 +11,7 @@ type ResultsCallback = {
 export interface INBKernel {
     interrupt(): void
     shutdown(): void
-    restart(): void
+    restart(onRestarted?: Function): void
     execute(code: string, onResults: ResultsCallback): void
     destroy(): void
 }

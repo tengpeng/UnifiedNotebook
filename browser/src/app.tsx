@@ -40,6 +40,7 @@ export default class App extends React.Component {
     cellVMList: ICellViewModel[]
   }
   private message: Message
+  private socket: SocketIOClient.Socket | undefined
 
   constructor(props: any) {
     super(props)
@@ -59,6 +60,8 @@ export default class App extends React.Component {
   createSession() {
     // socketio
     let socket = io("http://localhost:80", { reconnection: true });
+    this.socket = socket
+
     socket.on('socketID', (id: string) => {
       console.log("TCL: App -> socketID", id)
       socket.emit('session:start')
@@ -89,6 +92,19 @@ export default class App extends React.Component {
       })
     })
   }
+  clearOutput(cellVM: ICellViewModel) {
+    let newCellVM = cloneDeep(cellVM)
+    let newCellVMList = cloneDeep(this.state.cellVMList)
+    let cellIndex = newCellVMList.findIndex(cellVMItem => cellVMItem.cell.id === cellVM.cell.id)
+    console.log("TCL: App -> runCell -> cellIndex", cellIndex)
+    newCellVM.cell.data.outputs = []
+
+    newCellVMList.splice(cellIndex, 1, newCellVM)
+    this.setState({
+      cellVMList: newCellVMList
+    })
+
+  }
 
   onAddCell() {
     this.setState({
@@ -103,6 +119,21 @@ export default class App extends React.Component {
       cellVMList: newCellVMList
     })
   };
+
+  onSessionRestart() {
+    if (this.socket) {
+      this.socket.emit('session:restart')
+      this.setState({
+        connection: false
+      })
+      this.socket.on('session:restart:success', () => {
+        console.log('restarted')
+        this.setState({
+          connection: true
+        })
+      })
+    }
+  }
 
   onChange(ev: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) {
     let newCellVMList = cloneDeep(this.state.cellVMList)
@@ -122,12 +153,12 @@ export default class App extends React.Component {
         {this.state.cellVMList.map((cellVM: ICellViewModel, index: number) => {
           return (
             <div key={index}>
-              <Cell cellVM={cellVM} onDeleteCell={this.onDeleteCell.bind(this)} onChange={this.onChange.bind(this)} onRunCell={this.runCell.bind(this)} />
+              <Cell cellVM={cellVM} onDeleteCell={this.onDeleteCell.bind(this)} onChange={this.onChange.bind(this)} onRunCell={this.runCell.bind(this)} onClearOutput={this.clearOutput.bind(this)} />
             </div>
           );
         })}
         <br />
-        <Toolbar onAddCell={this.onAddCell.bind(this)} />
+        <Toolbar onAddCell={this.onAddCell.bind(this)} onSessionRestart={this.onSessionRestart.bind(this)} />
       </div>
     )
   };

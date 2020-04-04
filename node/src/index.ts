@@ -45,6 +45,15 @@ const main = async () => {
                 kernel = new NBKernel(sessionManager.session)
             }
         })
+        // restart kernel
+        socket.on('session:restart', async () => {
+            console.log("TCL: main -> session:restart")
+            if (kernel) {
+                kernel.restart(() => {
+                    socket.emit('session:restart:success')
+                })
+            }
+        })
         // run code
         socket.on('session:runcell', async (code) => {
             console.log("TCL: main -> session:runcell")
@@ -57,18 +66,6 @@ const main = async () => {
     // express middleware
     app.use(cors())
     app.use(express.json())
-
-    // // run cell
-    // app.post('/cell/run-cell', async (req, res) => {
-    //     let msgList: Array<KernelMessage.IIOPubMessage> = []
-    //     let replyList: Array<KernelMessage.IShellControlMessage> = []
-    //     session && await executeCode(session, req.body.code, (msg) => {
-    //         msgList.push(msg)
-    //     }, reply => {
-    //         replyList.push(reply)
-    //     })
-    //     res.send(JSON.stringify({ status: 'ok', data: { msgList, replyList } }))
-    // })
 
     app.listen(port, () => {
         console.log(`API: http://localhost:${port}`)

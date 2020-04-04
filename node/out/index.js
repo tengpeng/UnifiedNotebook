@@ -95,6 +95,18 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                     }
                 });
             }); });
+            // restart kernel
+            socket.on('session:restart', function () { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log("TCL: main -> session:restart");
+                    if (kernel) {
+                        kernel.restart(function () {
+                            socket.emit('session:restart:success');
+                        });
+                    }
+                    return [2 /*return*/];
+                });
+            }); });
             // run code
             socket.on('session:runcell', function (code) { return __awaiter(void 0, void 0, void 0, function () {
                 return __generator(this, function (_a) {

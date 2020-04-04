@@ -19,6 +19,7 @@ interface ICellProps {
   onRunCell(cellVM: ICellViewModel): void
   onChange(ev: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel): void
   onDeleteCell(cellVM: ICellViewModel): void
+  onClearOutput(cellVM: ICellViewModel): void
 }
 
 export default class Cell extends React.Component<ICellProps> {
@@ -76,6 +77,7 @@ export default class Cell extends React.Component<ICellProps> {
         <br />
         <button onClick={() => { this.props.onRunCell(this.props.cellVM) }}>run cell</button>
         <button onClick={() => { this.props.onDeleteCell(this.props.cellVM) }}>delete cell</button>
+        <button onClick={() => { this.props.onClearOutput(this.props.cellVM) }}>clear output</button>
         {this.renderOutput()}
       </div>
     );
