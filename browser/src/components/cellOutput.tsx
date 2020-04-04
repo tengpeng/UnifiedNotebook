@@ -1,7 +1,6 @@
 /**
  * Copied from https://github.com/microsoft/vscode-python/blob/14d81c8536755da1ccca82e2c0fc59f69eb86224/src/datascience-ui/interactive-common/cellOutput.tsx 
  */
-'use strict';
 import * as nbformat from '@jupyterlab/nbformat';
 import { JSONObject } from '@phosphor/coreutils';
 import ansiRegex from 'ansi-regex';
@@ -43,9 +42,6 @@ interface ICellOutput {
 export class CellOutput extends React.Component<ICellOutputProps> {
     // tslint:disable-next-line: no-any
     private static ansiToHtmlClass_ctor: ClassType<any> | undefined;
-    constructor(prop: ICellOutputProps) {
-        super(prop);
-    }
 
     // tslint:disable-next-line: no-any
     private static get ansiToHtmlClass(): ClassType<any> {
@@ -118,40 +114,6 @@ export class CellOutput extends React.Component<ICellOutputProps> {
         return null;
     }
 
-    // tslint:disable-next-line: no-any
-    public shouldComponentUpdate(nextProps: Readonly<ICellOutputProps>, _nextState: Readonly<ICellOutputProps>, _nextContext: any): boolean {
-        if (nextProps === this.props) {
-            return false;
-        }
-        // if (nextProps.baseTheme !== this.props.baseTheme) {
-        //     return true;
-        // }
-        // if (nextProps.maxTextSize !== this.props.maxTextSize) {
-        //     return true;
-        // }
-        // if (nextProps.themeMatplotlibPlots !== this.props.themeMatplotlibPlots) {
-        //     return true;
-        // }
-        // If they are the same, then nothing has changed.
-        // Note, we're using redux, hence we'll never have the same reference object with different property values.
-        if (nextProps.cellVM === this.props.cellVM) {
-            return false;
-        }
-        if (nextProps.cellVM.cell.data.cell_type !== this.props.cellVM.cell.data.cell_type) {
-            return true;
-        }
-        if (nextProps.cellVM.cell.state !== this.props.cellVM.cell.state) {
-            return true;
-        }
-        if (nextProps.cellVM.cell.data.outputs !== this.props.cellVM.cell.data.outputs) {
-            return true;
-        }
-        if (!this.isCodeCell() && nextProps.cellVM.cell.id !== Identifiers.EditCellId && nextProps.cellVM.cell.data.source !== this.props.cellVM.cell.data.source) {
-            return true;
-        }
-
-        return false;
-    }
     // Public for testing
     public getUnknownMimeTypeFormatString() {
         return 'Unknown Mime Type'
@@ -223,12 +185,7 @@ export class CellOutput extends React.Component<ICellOutputProps> {
         let renderWithScrollbars = false;
         let extraButton: JSX.Element | null = null;
 
-        // Special case for json. Just turn into a string
-        if (copy.data && copy.data.hasOwnProperty('application/json')) {
-            copy.data = JSON.stringify(copy.data);
-            renderWithScrollbars = true;
-            isText = true;
-        } else if (copy.output_type === 'stream') {
+        if (copy.output_type === 'stream') {
             // Stream output needs to be wrapped in xmp so it
             // show literally. Otherwise < chars start a new html element.
             mimeType = 'text/html';
@@ -382,6 +339,7 @@ export class CellOutput extends React.Component<ICellOutputProps> {
 
         transformedList.forEach((transformed, index) => {
             let mimetype = transformed.mimeType;
+            console.log("TCL: mimetype", mimetype)
 
             // If that worked, use the transform
             if (mimetype) {

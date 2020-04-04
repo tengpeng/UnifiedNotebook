@@ -38,7 +38,8 @@ export class Message {
 
     private addToCellData(cell: ICell, output: nbformat.IUnrecognizedOutput | nbformat.IExecuteResult | nbformat.IDisplayData | nbformat.IStream | nbformat.IError) {
         const data: nbformat.ICodeCell = cell.data as nbformat.ICodeCell;
-        data.outputs = [...data.outputs, output];
+        // data.outputs = [...data.outputs, output];
+        data.outputs = [output]
         cell.data = data;
     }
 

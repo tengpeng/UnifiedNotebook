@@ -1,23 +1,27 @@
 import * as React from "react";
-import io from "socket.io-client";
 import { ICellViewModel, CellState } from '../types'
-import { MultilineString, ICodeCell } from '@jupyterlab/nbformat'
-import { Message } from '../Message'
+import { ICodeCell } from '@jupyterlab/nbformat'
 import { CellInput } from './cellInput'
 import { CellOutput } from './cellOutput'
+import styled from 'styled-components'
+
+const ExecuteCount = styled.div`
+display: inline-block;
+color: #555;
+background: #f5f5f5;
+padding: 5px;
+font-family: monospace;
+font-size: 12px;
+`
 
 interface ICellProps {
-  cellVM: ICellViewModel,
+  cellVM: ICellViewModel
+  onRunCell(cellVM: ICellViewModel): void
   onChange(ev: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel): void
+  onDeleteCell(cellVM: ICellViewModel): void
 }
 
 export default class Cell extends React.Component<ICellProps> {
-  private message: Message
-
-  constructor(props: ICellProps) {
-    super(props)
-    this.message = new Message()
-  }
 
   private getCodeCell = () => {
     return this.props.cellVM.cell.data as ICodeCell;
@@ -64,27 +68,22 @@ export default class Cell extends React.Component<ICellProps> {
     return false;
   }
 
-  public runCell(value: MultilineString) {
-    // socketio
-    let socket = io("http://localhost:80", { reconnection: true });
-    socket.emit('session:runcell', value)
-    socket.on('session:runcell:success', (msg: any) => {
-      console.log("TCL: runCell -> msg", msg)
-      this.message.handleIOPub(msg, this.props.cellVM.cell)
-    })
-  }
-
   public render() {
     return (
       <div>
-        <CellInput cellVM={this.props.cellVM} onCodeChange={(ev) => this.props.onChange(ev, this.props.cellVM)} />
+        <ExecuteCount>[{this.props.cellVM.cell.data.execution_count ?? '-'}]</ExecuteCount>
+        <CellInput cellVM={this.props.cellVM} onKeyDown={this.onKeyDown.bind(this)} onCodeChange={(ev) => this.props.onChange(ev, this.props.cellVM)} />
         <br />
+        <button onClick={() => { this.props.onRunCell(this.props.cellVM) }}>run cell</button>
+        <button onClick={() => { this.props.onDeleteCell(this.props.cellVM) }}>delete cell</button>
         {this.renderOutput()}
-        <br />
-        <button onClick={() => { this.runCell(this.props.cellVM.cell.data.source) }}>run cell</button>
       </div>
     );
   }
 
+  onKeyDown(ev: React.KeyboardEvent) {
+    if (ev.keyCode === 13 && ev.ctrlKey) {
+      this.props.onRunCell(this.props.cellVM)
+    }
+  }
 }
-
