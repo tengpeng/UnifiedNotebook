@@ -74,7 +74,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
     var _a;
     return __generator(this, function (_b) {
         app = express_1.default();
-        port = 8080;
+        port = 8888;
         nbSocket = new socket_1.NBSocket().createSocketServer(app, 80);
         (_a = nbSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
             socket.emit('socketID', socket.client.id);
@@ -121,17 +121,6 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
         // express middleware
         app.use(cors_1.default());
         app.use(express_1.default.json());
-        // // run cell
-        // app.post('/cell/run-cell', async (req, res) => {
-        //     let msgList: Array<KernelMessage.IIOPubMessage> = []
-        //     let replyList: Array<KernelMessage.IShellControlMessage> = []
-        //     session && await executeCode(session, req.body.code, (msg) => {
-        //         msgList.push(msg)
-        //     }, reply => {
-        //         replyList.push(reply)
-        //     })
-        //     res.send(JSON.stringify({ status: 'ok', data: { msgList, replyList } }))
-        // })
         app.listen(port, function () {
             console.log("API: http://localhost:" + port);
         });

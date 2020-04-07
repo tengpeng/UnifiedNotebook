@@ -30,7 +30,7 @@ let kernel: INBKernel | undefined
 
 const main = async () => {
     const app = express()
-    const port = 8080
+    const port = 8888
 
     // socketIO
     let nbSocket = new NBSocket().createSocketServer(app, 80)
