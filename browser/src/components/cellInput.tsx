@@ -21,49 +21,43 @@ interface ICellInputProps {
     onCodeChange(ev: React.ChangeEvent<HTMLTextAreaElement>, cell: ICell): void
 }
 
-export class CellInput extends React.Component<ICellInputProps> {
-    public render() {
-        if (this.isCodeCell()) {
-            return this.renderCodeInputs();
-        } else {
-            // todo
-            return this.renderMarkdownInputs();
-        }
-    }
-
-    private isCodeCell = () => {
-        return this.props.cellVM.cell.data.cell_type === 'code';
+export const CellInput: React.FC<ICellInputProps> = (props) => {
+    const isCodeCell = () => {
+        return props.cellVM.cell.data.cell_type === 'code';
+    };
+    const isMarkdownCell = () => {
+        return props.cellVM.cell.data.cell_type === 'markdown';
     };
 
-    private isMarkdownCell = () => {
-        return this.props.cellVM.cell.data.cell_type === 'markdown';
+    const getMarkdownCell = () => {
+        return props.cellVM.cell.data as nbformat.IMarkdownCell;
     };
 
-    private getMarkdownCell = () => {
-        return this.props.cellVM.cell.data as nbformat.IMarkdownCell;
+    const shouldRenderMarkdownEditor = (): boolean => {
+        return isMarkdownCell();
     };
 
-    private shouldRenderMarkdownEditor = (): boolean => {
-        return this.isMarkdownCell();
-    };
-
-    private renderCodeInputs = () => {
+    const renderCodeInputs = () => {
         return (
-            <Container style={{ width: '100%', minHeight: "100px" }} onKeyDown={this.props.onKeyDown} value={this.props.cellVM.cell.data.source} onChange={(ev) => this.props.onCodeChange(ev, this.props.cellVM.cell)} ></Container>
+            <Container style={{ width: '100%', minHeight: "100px" }} onKeyDown={props.onKeyDown} value={props.cellVM.cell.data.source} onChange={(ev) => props.onCodeChange(ev, props.cellVM.cell)} ></Container>
         );
     };
-
-    private renderMarkdownInputs = () => {
-        if (this.shouldRenderMarkdownEditor()) {
-            const source = concatMultilineStringInput(this.getMarkdownCell().source);
+    const renderMarkdownInputs = () => {
+        if (shouldRenderMarkdownEditor()) {
+            const source = concatMultilineStringInput(getMarkdownCell().source);
             return (
                 <div className="cell-input">
                     {/* todo */}
-                    <textarea style={{ width: '100%', minHeight: "100px" }} value={source} onChange={(ev) => this.props.onCodeChange(ev, this.props.cellVM.cell)} ></textarea>
+                    <textarea style={{ width: '100%', minHeight: "100px" }} value={source} onChange={(ev) => props.onCodeChange(ev, props.cellVM.cell)} ></textarea>
                 </div>
             );
         }
+        return null
+    }
 
-        return null;
-    };
+    return (
+        isCodeCell()
+            ? (renderCodeInputs())
+            : renderMarkdownInputs() // todo
+    )
 }

@@ -59,6 +59,8 @@ export class Message {
         // make sure of this. Maybe only bother if an interrupt
         if (msg.content.execution_state === 'idle' && cell.state !== CellState.error) {
             cell.state = CellState.finished;
+        } else if (msg.content.execution_state === 'busy') {
+            cell.state = CellState.executing
         }
     }
 
