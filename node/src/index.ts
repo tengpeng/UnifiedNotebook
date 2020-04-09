@@ -9,10 +9,19 @@ import { NBSessionManager } from './session-manager'
 import { NBKernel } from './kernel'
 import type { INBSessionManager } from './session-manager'
 import type { INBKernel } from './kernel'
+import dotenv from 'dotenv'
+import { Zeppelin } from './zeppelin'
+
+dotenv.config()
+
+function test() {
+
+}
 
 const testNotebook = path.join(NOTEBOOK_PATH, 'test1.ipynb')
 const testKernelName = 'python'
 const testCode = '1 + 1'
+
 
 // options
 let options: Session.ISessionOptions = {
@@ -27,10 +36,17 @@ let options: Session.ISessionOptions = {
 // sessionManager
 let sessionManager: INBSessionManager | undefined
 let kernel: INBKernel | undefined
+let zeppelin: Zeppelin
+let noteId: string
 
 const main = async () => {
     const app = express()
-    const port = 8888
+    const port = process.env.EXPRESS_PORT
+
+    // init zeppelin
+    zeppelin = new Zeppelin()
+    zeppelin.deleteAllNote()
+    noteId = await zeppelin.createNote()
 
     // socketIO
     let nbSocket = new NBSocket().createSocketServer(app, 80)
@@ -60,6 +76,12 @@ const main = async () => {
             kernel?.execute(code, msg => {
                 socket.emit('session:runcell:success', msg)
             })
+        })
+        socket.on('session:runcell:zeppelin', async (code) => {
+            console.log("main -> session:runcell:zeppelin")
+            let paragraphId = await zeppelin.createParagraph(noteId, code)
+            let res = await zeppelin.runParagraph(noteId, paragraphId)
+            socket.emit('session:runcell:zeppelin:success', res)
         })
     })
 

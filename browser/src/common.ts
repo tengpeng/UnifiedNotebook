@@ -1,5 +1,5 @@
 import { Identifiers } from './constants'
-import { CellState, ICell, ICellViewModel } from './types'
+import { CellState, ICell, ICellViewModel, NotebookType } from './types'
 
 /**
  * Copied from https://github.com/microsoft/vscode-python/blob/61b179b2092050709e3c373a6738abad8ce581c4/src/datascience-ui/interactive-common/mainState.ts 
@@ -22,7 +22,8 @@ export const createEmptyCell = (id: string | undefined, executionCount: number |
 
 export const createCellVM = (inputCell: ICell): ICellViewModel => {
     const vm = {
-        cell: inputCell
+        cell: inputCell,
+        type: NotebookType.Jupyter
     };
     return vm;
 }

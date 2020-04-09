@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ICellViewModel, CellState } from '../types'
+import { ICellViewModel, CellState, NotebookType } from '../types'
 import { ICodeCell } from '@jupyterlab/nbformat'
 import { CellInput } from './cellInput'
 import { CellOutput } from './cellOutput'
@@ -18,6 +18,11 @@ color: #555;
 font-size: 12px;
 font-family: monospace;
 `
+const CellType = styled.span`
+color: #555;
+font-size: 12px;
+font-family: monospace;
+`
 
 interface ICellProps {
   cellVM: ICellViewModel
@@ -26,6 +31,7 @@ interface ICellProps {
   onDeleteCell(cellVM: ICellViewModel): void
   onClearOutput(cellVM: ICellViewModel): void
   onAddCellBelow(cellVM: ICellViewModel): void
+  onSwitchNotebook(cellVM: ICellViewModel): void
 }
 
 const Cell: React.FC<ICellProps> = (props) => {
@@ -52,13 +58,13 @@ const Cell: React.FC<ICellProps> = (props) => {
 
   const renderOutput = (): JSX.Element | null => {
     if (shouldRenderOutput()) {
-      return (
-        <div>
-          <CellOutput
-            cellVM={props.cellVM}
-          />
-        </div>
-      );
+      if (props.cellVM.type === NotebookType.Jupyter) {
+        return <CellOutput
+          cellVM={props.cellVM}
+        />
+      } else {
+        // todo zeppelin
+      }
     }
     return null;
   };
@@ -81,16 +87,25 @@ const Cell: React.FC<ICellProps> = (props) => {
     }
   }
 
-  return (
-    <div>
-      <ExecuteCount>[{props.cellVM.cell.data.execution_count ?? '-'}]</ExecuteCount>
-      <CellStatus>{CellState[props.cellVM.cell.state].toUpperCase()}</CellStatus>
-      <CellInput cellVM={props.cellVM} onKeyDown={onKeyDown} onCodeChange={(ev) => props.onChange(ev, props.cellVM)} />
-      <br />
+  const getToolbar = () => (
+    <>
       <button onClick={() => { props.onRunCell(props.cellVM) }}><i className="fas fa-play"></i></button>
       <button onClick={() => { props.onDeleteCell(props.cellVM) }}><i className="fas fa-times-circle"></i></button>
       <button onClick={() => { props.onClearOutput(props.cellVM) }}><i className="fas fa-eraser"></i></button>
       <button onClick={() => { props.onAddCellBelow(props.cellVM) }}><i className="fas fa-plus"></i></button>
+      <button onClick={() => { props.onSwitchNotebook(props.cellVM) }}><i className="fas fa-book"></i></button>
+    </>
+  )
+
+  return (
+    <div>
+      <ExecuteCount>[{props.cellVM.cell.data.execution_count ?? '-'}]</ExecuteCount>
+      <CellType>{NotebookType[props.cellVM.type]}</CellType>
+      <span> </span>
+      <CellStatus>{CellState[props.cellVM.cell.state].toUpperCase()}</CellStatus>
+      <CellInput cellVM={props.cellVM} onKeyDown={onKeyDown} onCodeChange={(ev) => props.onChange(ev, props.cellVM)} />
+      <br />
+      {getToolbar()}
       {renderOutput()}
     </div>
   )

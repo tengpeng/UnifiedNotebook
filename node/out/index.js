@@ -54,6 +54,11 @@ var cors_1 = __importDefault(require("cors"));
 var socket_1 = require("./socket");
 var session_manager_1 = require("./session-manager");
 var kernel_1 = require("./kernel");
+var dotenv_1 = __importDefault(require("dotenv"));
+var zeppelin_1 = require("./zeppelin");
+dotenv_1.default.config();
+function test() {
+}
 var testNotebook = path.join(consts_1.NOTEBOOK_PATH, 'test1.ipynb');
 var testKernelName = 'python';
 var testCode = '1 + 1';
@@ -69,62 +74,92 @@ var options = {
 // sessionManager
 var sessionManager;
 var kernel;
+var zeppelin;
+var noteId;
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
     var app, port, nbSocket;
     var _a;
     return __generator(this, function (_b) {
-        app = express_1.default();
-        port = 8888;
-        nbSocket = new socket_1.NBSocket().createSocketServer(app, 80);
-        (_a = nbSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
-            socket.emit('socketID', socket.client.id);
-            // start session
-            socket.on('session:start', function () { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            console.log("TCL: main -> session:start");
-                            return [4 /*yield*/, new session_manager_1.NBSessionManager().startNewSession(options)];
-                        case 1:
-                            sessionManager = _a.sent();
-                            socket.emit('session:start:success');
-                            if (sessionManager === null || sessionManager === void 0 ? void 0 : sessionManager.session) {
-                                kernel = new kernel_1.NBKernel(sessionManager.session);
+        switch (_b.label) {
+            case 0:
+                app = express_1.default();
+                port = process.env.EXPRESS_PORT;
+                // init zeppelin
+                zeppelin = new zeppelin_1.Zeppelin();
+                zeppelin.deleteAllNote();
+                return [4 /*yield*/, zeppelin.createNote()
+                    // socketIO
+                ];
+            case 1:
+                noteId = _b.sent();
+                nbSocket = new socket_1.NBSocket().createSocketServer(app, 80);
+                (_a = nbSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
+                    socket.emit('socketID', socket.client.id);
+                    // start session
+                    socket.on('session:start', function () { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    console.log("TCL: main -> session:start");
+                                    return [4 /*yield*/, new session_manager_1.NBSessionManager().startNewSession(options)];
+                                case 1:
+                                    sessionManager = _a.sent();
+                                    socket.emit('session:start:success');
+                                    if (sessionManager === null || sessionManager === void 0 ? void 0 : sessionManager.session) {
+                                        kernel = new kernel_1.NBKernel(sessionManager.session);
+                                    }
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                    // restart kernel
+                    socket.on('session:restart', function () { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            console.log("TCL: main -> session:restart");
+                            if (kernel) {
+                                kernel.restart(function () {
+                                    socket.emit('session:restart:success');
+                                });
                             }
                             return [2 /*return*/];
-                    }
-                });
-            }); });
-            // restart kernel
-            socket.on('session:restart', function () { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    console.log("TCL: main -> session:restart");
-                    if (kernel) {
-                        kernel.restart(function () {
-                            socket.emit('session:restart:success');
                         });
-                    }
-                    return [2 /*return*/];
+                    }); });
+                    // run code
+                    socket.on('session:runcell', function (code) { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            console.log("TCL: main -> session:runcell");
+                            kernel === null || kernel === void 0 ? void 0 : kernel.execute(code, function (msg) {
+                                socket.emit('session:runcell:success', msg);
+                            });
+                            return [2 /*return*/];
+                        });
+                    }); });
+                    socket.on('session:runcell:zeppelin', function (code) { return __awaiter(void 0, void 0, void 0, function () {
+                        var paragraphId, res;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    console.log("main -> session:runcell:zeppelin");
+                                    return [4 /*yield*/, zeppelin.createParagraph(noteId, code)];
+                                case 1:
+                                    paragraphId = _a.sent();
+                                    return [4 /*yield*/, zeppelin.runParagraph(noteId, paragraphId)];
+                                case 2:
+                                    res = _a.sent();
+                                    socket.emit('session:runcell:zeppelin:success', res);
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
                 });
-            }); });
-            // run code
-            socket.on('session:runcell', function (code) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    console.log("TCL: main -> session:runcell");
-                    kernel === null || kernel === void 0 ? void 0 : kernel.execute(code, function (msg) {
-                        socket.emit('session:runcell:success', msg);
-                    });
-                    return [2 /*return*/];
+                // express middleware
+                app.use(cors_1.default());
+                app.use(express_1.default.json());
+                app.listen(port, function () {
+                    console.log("API: http://localhost:" + port);
                 });
-            }); });
-        });
-        // express middleware
-        app.use(cors_1.default());
-        app.use(express_1.default.json());
-        app.listen(port, function () {
-            console.log("API: http://localhost:" + port);
-        });
-        return [2 /*return*/];
+                return [2 /*return*/];
+        }
     });
 }); };
 main();

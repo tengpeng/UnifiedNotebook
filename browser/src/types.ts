@@ -1,5 +1,10 @@
 import * as nbformat from '@jupyterlab/nbformat'
 
+export enum NotebookType {
+    Jupyter = 1,
+    Zeppelin
+}
+
 export enum CellState {
     editing = -1,
     init = 0,
@@ -30,6 +35,7 @@ export enum CursorPos {
 
 export interface ICellViewModel {
     cell: ICell;
+    type: NotebookType;
 }
 
 export type ClassType<T> = {
