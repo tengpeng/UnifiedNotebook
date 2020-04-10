@@ -1,30 +1,29 @@
-import React, { useState, useEffect } from "react";
+import io from "socket.io-client";
+import React, { useState, useEffect, useReducer } from "react";
+import { v4 as uuid } from 'uuid'
 import Header from "./components/header";
 import Cell from "./components/cell";
-import io from "socket.io-client";
 import { ICellViewModel, NotebookType } from './types'
-import { v4 as uuid } from 'uuid'
 import { Message } from './Message'
 import cloneDeep from 'lodash/cloneDeep'
 import { createEmptyCell, createCellVM } from './common'
 import { SpellResult } from './utils/spell-result'
+import { notebookReducer, notebookState, notebookActions } from './state/notebook'
 
 const App: React.FC = () => {
-  const [connection, setConnection] = useState(false)
-  const [cellVMList, setCellVMList] = useState([createCellVM(createEmptyCell(uuid()))])
   const [message] = useState(new Message())
-  const [socket, setSocket] = useState(undefined as SocketIOClient.Socket | undefined)
+  const [state, dispatch] = useReducer(notebookReducer, notebookState)
 
   useEffect(() => {
-    if (!connection) {
+    if (!state.connection) {
       createSession()
     }
-  }, [connection])
+  }, [state.connection])
 
   function createSession() {
     // socketio
     let socket = io("http://localhost:80", { reconnection: true });
-    setSocket(socket)
+    dispatch({ type: notebookActions.setSocket, payload: socket })
 
     socket.on('socketID', (id: string) => {
       console.log("TCL: App -> socketID", id)
@@ -33,7 +32,7 @@ const App: React.FC = () => {
     })
     socket.on('session:start:success', () => {
       document.title = "kernel connected";
-      setConnection(true)
+      dispatch({ type: notebookActions.setConnection, payload: true })
     })
   }
 
@@ -44,20 +43,20 @@ const App: React.FC = () => {
     if (!flag) return
 
     let newCellVM = cloneDeep(cellVM)
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
     // celltype
     if (cellVM.type === NotebookType.Jupyter) {
-      socket?.emit('session:runcell', cellVM.cell.data.source)
-      socket?.removeAllListeners()
-      socket?.on('session:runcell:success', (msg: any) => {
+      state.socket?.emit('session:runcell', cellVM.cell.data.source)
+      state.socket?.removeAllListeners()
+      state.socket?.on('session:runcell:success', (msg: any) => {
         message.handleIOPub(msg, newCellVM.cell)
         newCellVMList.splice(findCellIndex(cellVM), 1, newCellVM)
-        setCellVMList([...newCellVMList])
+        dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
       })
     } else {
-      socket?.emit('session:runcell:zeppelin', cellVM.cell.data.source)
-      socket?.removeAllListeners()
-      socket?.on('session:runcell:zeppelin:success', (msg: any) => {
+      state.socket?.emit('session:runcell:zeppelin', cellVM.cell.data.source)
+      state.socket?.removeAllListeners()
+      state.socket?.on('session:runcell:zeppelin:success', (msg: any) => {
         console.log("runCell -> msg", msg)
         // todo
       })
@@ -79,14 +78,14 @@ const App: React.FC = () => {
   const onBeforeRunCell = (cellVM: ICellViewModel): boolean => {
     // check if should continue
     let newCellVM = cloneDeep(cellVM)
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
 
     let res = switchNotebookType(cellVM)
     console.log("onBeforeRunCell -> res", res)
     if (res) {
       newCellVM.type = res
       newCellVMList.splice(findCellIndex(cellVM), 1, newCellVM)
-      setCellVMList([...newCellVMList])
+      dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
       return false
     }
     return true
@@ -94,46 +93,46 @@ const App: React.FC = () => {
 
   const clearOutput = (cellVM: ICellViewModel) => {
     let newCellVM = cloneDeep(cellVM)
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
     newCellVM.cell.data.outputs = []
 
     newCellVMList.splice(findCellIndex(cellVM), 1, newCellVM)
-    setCellVMList([...newCellVMList])
+    dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
   }
 
   const onAddCell = () => {
-    setCellVMList([...cellVMList, { cell: createEmptyCell(uuid(), null), type: NotebookType.Jupyter }])
+    dispatch({ type: notebookActions.setCellVMList, payload: [...state.cellVMList, { cell: createEmptyCell(uuid(), null), type: NotebookType.Jupyter }] })
   };
 
   const onAddCellBelow = (cellVM: ICellViewModel) => {
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
     newCellVMList.splice(findCellIndex(cellVM) + 1, 0, { cell: createEmptyCell(uuid(), null), type: NotebookType.Jupyter })
-    setCellVMList([...newCellVMList])
+    dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
   }
 
   const findCellIndex = (cellVM: ICellViewModel) => {
-    return cellVMList.findIndex(cellVMItem => cellVMItem.cell.id === cellVM.cell.id)
+    return state.cellVMList.findIndex((cellVMItem: ICellViewModel) => cellVMItem.cell.id === cellVM.cell.id)
   }
 
   const onDeleteCell = (cellVM: ICellViewModel) => {
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
     newCellVMList.splice(findCellIndex(cellVM), 1)
-    setCellVMList([...newCellVMList])
+    dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
   };
 
   const onSessionRestart = () => {
-    if (socket) {
-      socket.emit('session:restart')
-      setConnection(false)
-      socket.on('session:restart:success', () => {
+    if (state.socket) {
+      state.socket.emit('session:restart')
+      dispatch({ type: notebookActions.setConnection, payload: false })
+      state.socket.on('session:restart:success', () => {
         console.log('restarted')
-        setConnection(true)
+        dispatch({ type: notebookActions.setConnection, payload: true })
       })
     }
   }
 
   const onSwitchNotebook = (cellVM: ICellViewModel) => {
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
     let newCellVM = cloneDeep(cellVM)
     if (newCellVM.type === NotebookType.Jupyter) {
       newCellVM.type = NotebookType.Zeppelin
@@ -141,23 +140,23 @@ const App: React.FC = () => {
       newCellVM.type = NotebookType.Jupyter
     }
     newCellVMList.splice(findCellIndex(cellVM), 1, newCellVM)
-    setCellVMList([...newCellVMList])
+    dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
   }
 
   const onChange = (ev: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) => {
-    let newCellVMList = cloneDeep(cellVMList)
+    let newCellVMList = cloneDeep(state.cellVMList)
     newCellVMList.forEach((cellVMItem: ICellViewModel, index: number) => {
       if (cellVMItem.cell.id === cellVM.cell.id) {
         cellVMItem.cell.data.source = ev.target.value
       }
     });
-    setCellVMList([...newCellVMList])
+    dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
   }
 
   const getContent = () => {
     return (
       <div>
-        {cellVMList.map((cellVM: ICellViewModel, index: number) => {
+        {state.cellVMList.map((cellVM: ICellViewModel, index: number) => {
           return (
             <div key={index}>
               <Cell cellVM={cellVM} onDeleteCell={onDeleteCell} onChange={onChange} onRunCell={runCell} onClearOutput={clearOutput} onAddCellBelow={onAddCellBelow} onSwitchNotebook={onSwitchNotebook} />
@@ -173,7 +172,7 @@ const App: React.FC = () => {
     <div className="App" >
       <Header onAddCell={onAddCell} onSessionRestart={onSessionRestart} />
       <br />
-      {connection ? (
+      {state.connection ? (
         getContent()
       ) : (
           <div>loading...</div>
