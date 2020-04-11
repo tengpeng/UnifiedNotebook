@@ -6,7 +6,7 @@ import Cell from "./components/cell";
 import { ICellViewModel, NotebookType } from './types'
 import { Message } from './Message'
 import cloneDeep from 'lodash/cloneDeep'
-import { createEmptyCell, createCellVM } from './common'
+import { createEmptyCell } from './common'
 import { SpellResult } from './utils/spell-result'
 import { notebookReducer, notebookState, notebookActions } from './state/notebook'
 
@@ -16,6 +16,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!state.connection) {
+      document.title = "server connecting...";
       createSession()
     }
   }, [state.connection])
@@ -27,11 +28,7 @@ const App: React.FC = () => {
 
     socket.on('socketID', (id: string) => {
       console.log("TCL: App -> socketID", id)
-      socket.emit('session:start')
-      document.title = "kernel connecting...";
-    })
-    socket.on('session:start:success', () => {
-      document.title = "kernel connected";
+      document.title = "server connected";
       dispatch({ type: notebookActions.setConnection, payload: true })
     })
   }

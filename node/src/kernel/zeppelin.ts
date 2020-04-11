@@ -3,8 +3,13 @@ import { createLogger } from 'bunyan'
 
 const log = createLogger({ name: 'Zeppelin' })
 
-interface IZeppelin {
-    createNote(name: string): void
+export interface IZeppelinKernel {
+    noteId: string
+    createNote(name?: string): any
+    deleteNote(noteId: string): any
+    createParagraph(paragraphId: string, text: string): any
+    deleteAllNote(): any
+    runParagraph(noteId: string, paragraphId: string): any
 }
 
 /* -------------------------------------------------------------------------- */
@@ -33,10 +38,11 @@ namespace Api {
 /* -------------------------------------------------------------------------- */
 /*                           zeppelin fetch request                           */
 /* -------------------------------------------------------------------------- */
-export class Zeppelin implements IZeppelin {
+export class ZeppelinKernel implements IZeppelinKernel {
     private server: string
     private port: string
     private url: string
+    noteId: string = ''
 
     constructor(server: string = `${process.env.ZEPPELIN_PROTOCOL}://${process.env.ZEPPELIN_HOST}` as string, port: string = process.env.ZEPPELIN_PORT as string) {
         this.server = server
@@ -61,6 +67,12 @@ export class Zeppelin implements IZeppelin {
     async createNote(name?: string) {
         let res = await this.sendMsg('POST', this.url + Api.createNote(), { name: name ?? '' })
         return await this.handleResponse(res)
+    }
+
+    async init() {
+        this.deleteAllNote()
+        this.noteId = await this.createNote() ?? ''
+        return this
     }
 
     async deleteNote(noteId: string) {

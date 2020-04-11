@@ -35,89 +35,45 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var path = __importStar(require("path"));
-var utils = __importStar(require("./utils"));
-var consts_1 = require("./consts");
 var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
-var socket_1 = require("./socket");
-var session_manager_1 = require("./session-manager");
-var kernel_1 = require("./kernel");
 var dotenv_1 = __importDefault(require("dotenv"));
-var zeppelin_1 = require("./zeppelin");
+var socket_1 = require("./socket");
+var zeppelin_1 = require("./kernel/zeppelin");
+var jupyter_1 = require("./kernel/jupyter");
 dotenv_1.default.config();
-function test() {
-}
-var testNotebook = path.join(consts_1.NOTEBOOK_PATH, 'test1.ipynb');
-var testKernelName = 'python';
-var testCode = '1 + 1';
-// options
-var options = {
-    path: testNotebook,
-    type: utils.isNotebookFile(testNotebook) ? 'notebook' : '',
-    name: utils.getFileName(testNotebook),
-    kernel: {
-        name: testKernelName
-    }
-};
-// sessionManager
-var sessionManager;
-var kernel;
+var jupyter;
 var zeppelin;
-var noteId;
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, nbSocket;
+    var app, port, notebookSocket;
     var _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 app = express_1.default();
                 port = process.env.EXPRESS_PORT;
-                // init zeppelin
-                zeppelin = new zeppelin_1.Zeppelin();
-                zeppelin.deleteAllNote();
-                return [4 /*yield*/, zeppelin.createNote()
+                return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
+            case 1:
+                // init zeppelin and jupyter
+                zeppelin = _b.sent();
+                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()
                     // socketIO
                 ];
-            case 1:
-                noteId = _b.sent();
-                nbSocket = new socket_1.NBSocket().createSocketServer(app, 80);
-                (_a = nbSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
+            case 2:
+                jupyter = _b.sent();
+                notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
+                (_a = notebookSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
                     socket.emit('socketID', socket.client.id);
-                    // start session
-                    socket.on('session:start', function () { return __awaiter(void 0, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    console.log("TCL: main -> session:start");
-                                    return [4 /*yield*/, new session_manager_1.NBSessionManager().startNewSession(options)];
-                                case 1:
-                                    sessionManager = _a.sent();
-                                    socket.emit('session:start:success');
-                                    if (sessionManager === null || sessionManager === void 0 ? void 0 : sessionManager.session) {
-                                        kernel = new kernel_1.NBKernel(sessionManager.session);
-                                    }
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); });
                     // restart kernel
                     socket.on('session:restart', function () { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             console.log("TCL: main -> session:restart");
-                            if (kernel) {
-                                kernel.restart(function () {
+                            if (jupyter) {
+                                jupyter.restart(function () {
                                     socket.emit('session:restart:success');
                                 });
                             }
@@ -128,7 +84,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                     socket.on('session:runcell', function (code) { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             console.log("TCL: main -> session:runcell");
-                            kernel === null || kernel === void 0 ? void 0 : kernel.execute(code, function (msg) {
+                            jupyter === null || jupyter === void 0 ? void 0 : jupyter.execute(code, function (msg) {
                                 socket.emit('session:runcell:success', msg);
                             });
                             return [2 /*return*/];
@@ -140,14 +96,16 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             switch (_a.label) {
                                 case 0:
                                     console.log("main -> session:runcell:zeppelin");
-                                    return [4 /*yield*/, zeppelin.createParagraph(noteId, code)];
+                                    if (!zeppelin) return [3 /*break*/, 3];
+                                    return [4 /*yield*/, zeppelin.createParagraph(zeppelin.noteId, code)];
                                 case 1:
                                     paragraphId = _a.sent();
-                                    return [4 /*yield*/, zeppelin.runParagraph(noteId, paragraphId)];
+                                    return [4 /*yield*/, zeppelin.runParagraph(zeppelin.noteId, paragraphId)];
                                 case 2:
                                     res = _a.sent();
                                     socket.emit('session:runcell:zeppelin:success', res);
-                                    return [2 /*return*/];
+                                    _a.label = 3;
+                                case 3: return [2 /*return*/];
                             }
                         });
                     }); });

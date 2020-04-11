@@ -1,71 +1,32 @@
-import { Session, SessionManager, KernelManager, KernelMessage, Kernel } from '@jupyterlab/services'
-import * as path from 'path'
-import * as utils from './utils'
-import { NOTEBOOK_PATH } from './consts'
 import express from 'express'
 import cors from 'cors'
-import { NBSocket } from './socket'
-import { NBSessionManager } from './session-manager'
-import { NBKernel } from './kernel'
-import type { INBSessionManager } from './session-manager'
-import type { INBKernel } from './kernel'
 import dotenv from 'dotenv'
-import { Zeppelin } from './zeppelin'
+import { NotebookSocket } from './socket'
+import { ZeppelinKernel, IZeppelinKernel } from './kernel/zeppelin'
+import { JupyterKernel, IJupyterKernel } from './kernel/jupyter'
 
 dotenv.config()
 
-function test() {
-
-}
-
-const testNotebook = path.join(NOTEBOOK_PATH, 'test1.ipynb')
-const testKernelName = 'python'
-const testCode = '1 + 1'
-
-
-// options
-let options: Session.ISessionOptions = {
-    path: testNotebook,
-    type: utils.isNotebookFile(testNotebook) ? 'notebook' : '',
-    name: utils.getFileName(testNotebook),
-    kernel: {
-        name: testKernelName
-    }
-}
-
-// sessionManager
-let sessionManager: INBSessionManager | undefined
-let kernel: INBKernel | undefined
-let zeppelin: Zeppelin
-let noteId: string
+let jupyter: IJupyterKernel | undefined
+let zeppelin: IZeppelinKernel | undefined
 
 const main = async () => {
     const app = express()
     const port = process.env.EXPRESS_PORT
 
-    // init zeppelin
-    zeppelin = new Zeppelin()
-    zeppelin.deleteAllNote()
-    noteId = await zeppelin.createNote()
+    // init zeppelin and jupyter
+    zeppelin = await new ZeppelinKernel().init()
+    jupyter = await new JupyterKernel().init()
 
     // socketIO
-    let nbSocket = new NBSocket().createSocketServer(app, 80)
-    nbSocket.io?.on('connection', (socket: SocketIO.Socket) => {
+    let notebookSocket = new NotebookSocket().createSocketServer(app, 80)
+    notebookSocket.io?.on('connection', (socket: SocketIO.Socket) => {
         socket.emit('socketID', socket.client.id)
-        // start session
-        socket.on('session:start', async () => {
-            console.log("TCL: main -> session:start")
-            sessionManager = await new NBSessionManager().startNewSession(options)
-            socket.emit('session:start:success')
-            if (sessionManager?.session) {
-                kernel = new NBKernel(sessionManager.session)
-            }
-        })
         // restart kernel
         socket.on('session:restart', async () => {
             console.log("TCL: main -> session:restart")
-            if (kernel) {
-                kernel.restart(() => {
+            if (jupyter) {
+                jupyter.restart(() => {
                     socket.emit('session:restart:success')
                 })
             }
@@ -73,15 +34,17 @@ const main = async () => {
         // run code
         socket.on('session:runcell', async (code) => {
             console.log("TCL: main -> session:runcell")
-            kernel?.execute(code, msg => {
+            jupyter?.execute(code, msg => {
                 socket.emit('session:runcell:success', msg)
             })
         })
         socket.on('session:runcell:zeppelin', async (code) => {
             console.log("main -> session:runcell:zeppelin")
-            let paragraphId = await zeppelin.createParagraph(noteId, code)
-            let res = await zeppelin.runParagraph(noteId, paragraphId)
-            socket.emit('session:runcell:zeppelin:success', res)
+            if (zeppelin) {
+                let paragraphId = await zeppelin.createParagraph(zeppelin.noteId, code)
+                let res = await zeppelin.runParagraph(zeppelin.noteId, paragraphId)
+                socket.emit('session:runcell:zeppelin:success', res)
+            }
         })
     })
 

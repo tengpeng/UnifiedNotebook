@@ -5,11 +5,11 @@ import { createLogger } from 'bunyan'
 
 const log = createLogger({ name: 'Socket' })
 
-interface INBSocket {
-    createSocketServer(app: Express.Application, port: number): NBSocket
+interface INotebookSocket {
+    createSocketServer(app: Express.Application, port: number): NotebookSocket
 }
 
-export class NBSocket implements INBSocket {
+export class NotebookSocket implements INotebookSocket {
     server: Server | undefined
     io: socketIO.Server | undefined
     socket: socketIO.Socket | undefined

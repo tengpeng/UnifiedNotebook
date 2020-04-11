@@ -339,7 +339,6 @@ export class CellOutput extends React.Component<ICellOutputProps> {
 
         transformedList.forEach((transformed, index) => {
             let mimetype = transformed.mimeType;
-            console.log("TCL: mimetype", mimetype)
 
             // If that worked, use the transform
             if (mimetype) {

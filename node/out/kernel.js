@@ -2,20 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var bunyan_1 = require("bunyan");
 var log = bunyan_1.createLogger({ name: 'Kernel' });
-var NBKernel = /** @class */ (function () {
-    function NBKernel(session) {
+var JupyterKernel = /** @class */ (function () {
+    function JupyterKernel(session) {
         this.session = session;
         this.session.statusChanged.connect(function () { });
     }
-    NBKernel.prototype.interrupt = function () {
+    JupyterKernel.prototype.interrupt = function () {
         var _a;
         (_a = this.session.kernel) === null || _a === void 0 ? void 0 : _a.interrupt();
     };
-    NBKernel.prototype.shutdown = function () {
+    JupyterKernel.prototype.shutdown = function () {
         var _a;
         (_a = this.session.kernel) === null || _a === void 0 ? void 0 : _a.shutdown();
     };
-    NBKernel.prototype.restart = function (onRestarted) {
+    JupyterKernel.prototype.restart = function (onRestarted) {
         var _a;
         var future = (_a = this.session.kernel) === null || _a === void 0 ? void 0 : _a.restart();
         future && future.then(function () {
@@ -23,7 +23,7 @@ var NBKernel = /** @class */ (function () {
                 onRestarted();
         });
     };
-    NBKernel.prototype.execute = function (code, onResults) {
+    JupyterKernel.prototype.execute = function (code, onResults) {
         var _a;
         var future = (_a = this.session.kernel) === null || _a === void 0 ? void 0 : _a.requestExecute({ code: code });
         if (future) {
@@ -35,11 +35,11 @@ var NBKernel = /** @class */ (function () {
             future.onStdin = function (message) { return onResults(message); };
         }
     };
-    NBKernel.prototype.destroy = function () {
+    JupyterKernel.prototype.destroy = function () {
         log.info("WSKernel: destroying jupyter-js-services Session");
         this.session.dispose();
     };
-    return NBKernel;
+    return JupyterKernel;
 }());
-exports.NBKernel = NBKernel;
+exports.JupyterKernel = JupyterKernel;
 //# sourceMappingURL=kernel.js.map
