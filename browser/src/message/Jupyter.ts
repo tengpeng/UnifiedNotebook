@@ -4,10 +4,10 @@
 
 import { KernelMessage } from '@jupyterlab/services'
 import * as nbformat from '@jupyterlab/nbformat'
-import { ICell, CellState } from './types'
-import { concatMultilineStringOutput, formatStreamText } from './utils/common'
+import { ICell, CellState } from '../types'
+import { concatMultilineStringOutput, formatStreamText } from '../utils/common'
 
-export class Message {
+export class JupyterMessage {
 
     handleIOPub(msg: KernelMessage.IIOPubMessage, cell: ICell) {
         try {

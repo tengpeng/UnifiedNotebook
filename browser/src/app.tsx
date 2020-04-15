@@ -4,14 +4,14 @@ import { v4 as uuid } from 'uuid'
 import Header from "./components/header";
 import Cell from "./components/cell";
 import { ICellViewModel, NotebookType } from './types'
-import { Message } from './Message'
+import { JupyterMessage } from './message/Jupyter'
 import cloneDeep from 'lodash/cloneDeep'
 import { createEmptyCell } from './common'
 import { SpellResult } from './utils/spell-result'
 import { notebookReducer, notebookState, notebookActions } from './state/notebook'
 
 const App: React.FC = () => {
-  const [message] = useState(new Message())
+  const [jupyterMessage] = useState(new JupyterMessage())
   const [state, dispatch] = useReducer(notebookReducer, notebookState)
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const App: React.FC = () => {
       state.socket?.emit('session:runcell', cellVM.cell.data.source)
       state.socket?.removeAllListeners()
       state.socket?.on('session:runcell:success', (msg: any) => {
-        message.handleIOPub(msg, newCellVM.cell)
+        jupyterMessage.handleIOPub(msg, newCellVM.cell)
         newCellVMList.splice(findCellIndex(cellVM), 1, newCellVM)
         dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
       })
