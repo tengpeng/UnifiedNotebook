@@ -32,7 +32,7 @@ export class JupyterMessage {
             }
 
         } catch (err) {
-            console.log("TCL: Message -> handleIOPub -> err", err)
+            console.log("JupyterMessage -> handleIOPub -> err", err)
         }
     }
 

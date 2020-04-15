@@ -3,6 +3,7 @@ import { ICellViewModel, CellState, NotebookType } from '../types'
 import { ICodeCell } from '@jupyterlab/nbformat'
 import { CellInput } from './cellInput'
 import { CellOutput } from './cellOutput'
+import { CellOutputZeppelin } from './cellOutputZeppelin'
 import styled from 'styled-components'
 
 const ExecuteCount = styled.div`
@@ -63,7 +64,7 @@ const Cell: React.FC<ICellProps> = (props) => {
           cellVM={props.cellVM}
         />
       } else {
-        // todo zeppelin
+        return <CellOutputZeppelin cellVM={props.cellVM} />
       }
     }
     return null;

@@ -18,7 +18,7 @@ export interface ICell {
     file: string;
     line: number;
     state: CellState;
-    data: nbformat.ICodeCell | nbformat.IRawCell | nbformat.IMarkdownCell | IMessageCell;
+    data: nbformat.ICodeCell | nbformat.IRawCell | nbformat.IMarkdownCell | IMessageCell | IZeppelinCell;
     extraLines?: number[];
 }
 
@@ -41,3 +41,32 @@ export interface ICellViewModel {
 export type ClassType<T> = {
     new(...args: any[]): T;
 };
+
+// zeppelin
+export interface IZeppelinCell {
+    source: string;
+    execution_count: number | undefined;
+    cell_type: 'code';
+    outputs: ParagraphResults;
+}
+
+export interface ParagraphResults {
+    code?: 'ERROR' | 'SUCCESS'
+    msg?: ParagraphIResultsMsgItem[];
+
+    [index: number]: {};
+}
+
+export class ParagraphIResultsMsgItem {
+    type: DatasetType = DatasetType.TEXT;
+    data = '';
+}
+
+export enum DatasetType {
+    NETWORK = 'NETWORK',
+    TABLE = 'TABLE',
+    HTML = 'HTML',
+    TEXT = 'TEXT',
+    // ANGULAR = 'ANGULAR',
+    IMG = 'IMG'
+}

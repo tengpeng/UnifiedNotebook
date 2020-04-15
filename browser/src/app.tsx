@@ -3,15 +3,17 @@ import React, { useState, useEffect, useReducer } from "react";
 import { v4 as uuid } from 'uuid'
 import Header from "./components/header";
 import Cell from "./components/cell";
-import { ICellViewModel, NotebookType } from './types'
-import { JupyterMessage } from './message/Jupyter'
+import { ICellViewModel, NotebookType, ParagraphResults } from './types'
 import cloneDeep from 'lodash/cloneDeep'
 import { createEmptyCell } from './common'
 import { SpellResult } from './utils/spell-result'
 import { notebookReducer, notebookState, notebookActions } from './state/notebook'
+import { JupyterMessage } from './message/Jupyter'
+import { ZeppelinMessage } from "./message/Zeppelin";
 
 const App: React.FC = () => {
   const [jupyterMessage] = useState(new JupyterMessage())
+  const [zeppelinMessage] = useState(new ZeppelinMessage())
   const [state, dispatch] = useReducer(notebookReducer, notebookState)
 
   useEffect(() => {
@@ -53,9 +55,10 @@ const App: React.FC = () => {
     } else {
       state.socket?.emit('session:runcell:zeppelin', cellVM.cell.data.source)
       state.socket?.removeAllListeners()
-      state.socket?.on('session:runcell:zeppelin:success', (msg: any) => {
-        console.log("runCell -> msg", msg)
-        // todo
+      state.socket?.on('session:runcell:zeppelin:success', (msg: ParagraphResults) => {
+        zeppelinMessage.handleResults(msg, newCellVM.cell)
+        newCellVMList.splice(findCellIndex(cellVM), 1, newCellVM)
+        dispatch({ type: notebookActions.setCellVMList, payload: [...newCellVMList] })
       })
     }
   }
