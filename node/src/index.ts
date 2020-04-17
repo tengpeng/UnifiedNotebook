@@ -18,6 +18,8 @@ const main = async () => {
     zeppelin = await new ZeppelinKernel().init()
     jupyter = await new JupyterKernel().init()
 
+    jupyter.execute('1+1', msg => { console.log(msg) })
+
     // socketIO
     let notebookSocket = new NotebookSocket().createSocketServer(app, 80)
     notebookSocket.io?.on('connection', (socket: SocketIO.Socket) => {

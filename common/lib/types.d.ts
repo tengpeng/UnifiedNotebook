@@ -45,7 +45,7 @@ export interface ICodeCell extends ICellBase {
 export interface ICellOutput {
     type: ICellOutputType;
 }
-export declare type ICellOutputType = "stream" | "display" | "result" | "error";
+export declare type ICellOutputType = "stream" | "display" | "result" | "error" | "clear" | "status";
 export interface IMimeBundle {
     [key: string]: string;
 }
@@ -58,11 +58,18 @@ export interface IDiaplayOutput extends ICellOutput {
     type: "display";
     data: IMimeBundle;
 }
+export interface IClearOutput extends ICellOutput {
+    type: "clear";
+}
 export interface IExecuteResultOutput extends ICellOutput {
     type: "result";
     data: IMimeBundle;
 }
-export interface IError extends ICellOutput {
+export interface IStatusOutput extends ICellOutput {
+    type: "status";
+    state: ICellState
+}
+export interface IErrorOutput extends ICellOutput {
     type: "error";
     ename: string;
     evalue: string;

@@ -60,11 +60,10 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
             case 1:
                 // init zeppelin and jupyter
                 zeppelin = _b.sent();
-                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()
-                    // socketIO
-                ];
+                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()];
             case 2:
                 jupyter = _b.sent();
+                jupyter.execute('1+1', function (msg) { console.log(msg); });
                 notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
                 (_a = notebookSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
                     socket.emit('socketID', socket.client.id);
