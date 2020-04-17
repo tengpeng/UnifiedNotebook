@@ -1,4 +1,4 @@
-import { createEmptyCellVM } from '../common'
+import { createEmptyCodeCellVM } from '../common'
 import cloneDeep from 'lodash/cloneDeep'
 import { INotebookViewModel } from '../types'
 
@@ -13,7 +13,7 @@ export type IState = {
 const initialState: IState = {
     notebookVM: {
         notebook: {
-            cells: [createEmptyCellVM()]
+            cells: [createEmptyCodeCellVM()]
         }
     }
 }
@@ -21,7 +21,7 @@ const initialState: IState = {
 export const notebookReducer = (state = initialState, action: IAction) => {
     if (action.type === 'addCell') {
         let _ = cloneDeep(state)
-        _.notebookVM.notebook.cells.push(createEmptyCellVM())
+        _.notebookVM.notebook.cells.push(createEmptyCodeCellVM())
         return _
     } else if (action.type === 'updateNotebook') {
         let _ = cloneDeep(state)

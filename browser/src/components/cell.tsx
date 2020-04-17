@@ -18,11 +18,18 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
     }
 
     const renderInput = () => {
-        return <Input cellVM={cellVM} onKeyDown={onKeyDown} onInputChange={onInputChange} />
+        return <Input cellVM={cellVM} onRunCell={onRunCell} onKeyDown={onKeyDown} onInputChange={onInputChange} onChangeCellLenguage={onChangeCellLanguage} />
     }
 
     const onAddCell = () => {
         store.dispatch({ type: 'addCell' })
+    }
+
+    const onChangeCellLanguage = (language: string) => {
+        let newCellVMList = copyCellVMList()
+        let index = findCellVMIndex(cellVM)
+        newCellVMList[index].cell.language = language
+        store.dispatch({ type: 'updateCells', payload: newCellVMList })
     }
 
     const getCellVMList = () => {
@@ -45,8 +52,13 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
         }
     }
 
+    const onRunCell = () => {
+        runCell()
+    }
+
     const runCell = () => {
         // todo
+        console.log("runCell -> sourceCode", cellVM.cell)
     }
 
     const onInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) => {
@@ -64,7 +76,6 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
 
     return (
         <>
-            <div>{JSON.stringify(cellVM)}</div>
             {renderInput()}
             <br />
             {shouldRenderOutput() ? renderOutput() : null}

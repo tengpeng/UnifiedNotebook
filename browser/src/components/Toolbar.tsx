@@ -13,6 +13,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     id: '4e698ede-c098-4d84-bbce-516d448c4f97',
                     type: CellType.CODE,
                     source: '1 + 1',
+                    language: 'python',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -25,6 +26,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     id: 'df62fa94-8d63-4c37-8a65-0501c09f4eba',
                     type: CellType.CODE,
                     source: '$python print("hello wolrd")',
+                    language: 'python',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,

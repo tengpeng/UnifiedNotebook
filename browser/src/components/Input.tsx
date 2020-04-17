@@ -4,10 +4,24 @@ import { ICellViewModel } from '../types'
 interface Props {
     cellVM: ICellViewModel
     onInputChange(event: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel): void
+    onChangeCellLenguage(language: string): void
+    onRunCell(): void
     onKeyDown(ev: React.KeyboardEvent): void
 }
 
-export const Input: React.FC<Props> = ({ cellVM, onInputChange, onKeyDown }) => {
+export const Input: React.FC<Props> = ({ cellVM, onInputChange, onKeyDown, onChangeCellLenguage, onRunCell }) => {
+
+    const renderToolbar = () => {
+        return <>
+            <div>
+                <span>language: {cellVM.cell.language}</span>
+            </div>
+            <button onClick={() => { onChangeCellLenguage('python') }}>python</button>
+            <button onClick={() => { onChangeCellLenguage('sh') }}>sh</button>
+            <button onClick={onRunCell}>run cell</button>
+        </>
+    }
+
     const renderInput = () => {
         return <textarea
             style={{ width: '100%', minHeight: "100px" }}
@@ -17,6 +31,7 @@ export const Input: React.FC<Props> = ({ cellVM, onInputChange, onKeyDown }) => 
     }
     return (
         <>
+            {renderToolbar()}
             {renderInput()}
         </>
     )

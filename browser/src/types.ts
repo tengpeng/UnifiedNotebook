@@ -29,7 +29,7 @@ export interface INotebook {
  * outputs: cell output list containing mime bundle data object
  * state: cell current state running/finished/error
  */
-export interface ICell {
+export interface ICellBase {
     id: string;
     type: CellType;
     source: string;
@@ -37,6 +37,8 @@ export interface ICell {
     outputs: ICellOutput[];
     state: ICellState;
 }
+
+export type ICell = ICodeCell
 
 // cell state
 export enum ICellState {
@@ -59,7 +61,7 @@ export enum CellType {
 };
 
 // code cell
-export interface ICodeCell extends ICell {
+export interface ICodeCell extends ICellBase {
     language: string;
 }
 
