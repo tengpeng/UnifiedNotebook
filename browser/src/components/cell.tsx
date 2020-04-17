@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel, INotebookViewModel } from '../types'
+import { ICellViewModel, INotebookViewModel } from 'common/lib/types.js'
 import { Output } from './Output'
 import { Input } from './Input'
 import cloneDeep from 'lodash/cloneDeep'

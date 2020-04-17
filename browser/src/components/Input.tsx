@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel } from '../types'
+import { ICellViewModel } from 'common/lib/types.js'
 
 interface Props {
     cellVM: ICellViewModel

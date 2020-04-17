@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "watch": "del ./node/out/**/* && tsc --build ./node/tsconfig.json -w",
+    "watch": "del ./out/**/* && tsc --build ./tsconfig.json -w",
     "dev": "python3 ./main.py"
   },
   "dependencies": {

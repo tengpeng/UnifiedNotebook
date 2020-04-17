@@ -1,4 +1,4 @@
-import { ICellState, ICodeCell, ICellViewModel, CellType } from './types'
+import { ICellState, ICodeCell, ICellViewModel, CellType } from 'common/lib/types.js'
 import { v4 as uuid } from 'uuid'
 
 export const createEmptyCodeCell = (id?: string): ICodeCell => {

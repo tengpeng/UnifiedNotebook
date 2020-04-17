@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellState, INotebookViewModel, CellType } from '../types'
+import { ICellState, INotebookViewModel, CellType } from 'common/lib/types.js'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
 import { store } from '../store'

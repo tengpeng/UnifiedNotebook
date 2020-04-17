@@ -1,0 +1,13 @@
+{
+  "name": "common",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {},
+  "scripts": {
+    "build": "del ./lib/**/* && tsc --build ./tsconfig.json"
+  },
+  "devDependencies": {
+    "del-cli": "^3.0.0",
+    "typescript": "^3.8.3"
+  }
+}

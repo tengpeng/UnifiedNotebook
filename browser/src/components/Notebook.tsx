@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel } from '../types'
+import { ICellViewModel } from 'common/lib/types.js'
 import Cell from './Cell'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
