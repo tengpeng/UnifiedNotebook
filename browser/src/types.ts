@@ -1,72 +1,92 @@
-import * as nbformat from '@jupyterlab/nbformat'
-
-export enum NotebookType {
-    Jupyter = 1,
-    Zeppelin
+/* -------------------------------------------------------------------------- */
+/*                                  react vm                                  */
+/* -------------------------------------------------------------------------- */
+// notebook vm in react
+export interface INotebookViewModel {
+    notebook: INotebook
+}
+// cell vm in react
+export interface ICellViewModel {
+    cell: ICell
 }
 
-export enum CellState {
-    editing = -1,
-    init = 0,
-    executing = 1,
-    finished = 2,
-    error = 3
+/* -------------------------------------------------------------------------- */
+/*                                  notebook                                  */
+/* -------------------------------------------------------------------------- */
+// notebook
+export interface INotebook {
+    cells: ICellViewModel[]
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                    cell                                    */
+/* -------------------------------------------------------------------------- */
+/**
+ * id: cell uuid
+ * type: code/markdown/parameter
+ * source: user input value
+ * metadata: define show/hide source/output and scrollbar in output
+ * outputs: cell output list containing mime bundle data object
+ * state: cell current state running/finished/error
+ */
 export interface ICell {
     id: string;
-    file: string;
-    line: number;
-    state: CellState;
-    data: nbformat.ICodeCell | nbformat.IRawCell | nbformat.IMarkdownCell | IMessageCell | IZeppelinCell;
-    extraLines?: number[];
+    type: CellType;
+    source: string;
+    metadata: ICellMetadata;
+    outputs: ICellOutput[];
+    state: ICellState;
 }
 
-export interface IMessageCell extends nbformat.IBaseCell {
-    cell_type: 'messages';
-    messages: string[];
+// cell state
+export enum ICellState {
+    "Running" = 1,
+    "Finished",
+    "Error",
 }
 
-export enum CursorPos {
-    Top,
-    Bottom,
-    Current
+// cell metadata
+export interface ICellMetadata {
+    scrollbar: boolean;
+    source_hidden: boolean;
+    output_hidden: boolean;
 }
-
-export interface ICellViewModel {
-    cell: ICell;
-    type: NotebookType;
-}
-
-export type ClassType<T> = {
-    new(...args: any[]): T;
+// celltype
+export enum CellType {
+    CODE = 'code',
+    MARKDOWN = 'markdown',
+    PARAMETER = 'parameter'
 };
 
-// zeppelin
-export interface IZeppelinCell {
-    source: string;
-    execution_count: number | undefined;
-    cell_type: 'code';
-    outputs: ParagraphResults;
+// code cell
+export interface ICodeCell extends ICell {
+    language: string;
 }
 
-export interface ParagraphResults {
-    code?: 'ERROR' | 'SUCCESS'
-    msg?: ParagraphIResultsMsgItem[];
-
-    [index: number]: {};
+// code cell output
+export interface ICellOutput {
+    type: ICellOutputType;
 }
-
-export class ParagraphIResultsMsgItem {
-    type: DatasetType = DatasetType.TEXT;
-    data = '';
+export type ICellOutputType = "stream" | "display" | "result" | "error"; // zeppelin TEXT HTML IMAGE TABLE can be mimetype
+export interface IMimeBundle {
+    [key: string]: string // text/plain text/html ...
 }
-
-export enum DatasetType {
-    NETWORK = 'NETWORK',
-    TABLE = 'TABLE',
-    HTML = 'HTML',
-    TEXT = 'TEXT',
-    // ANGULAR = 'ANGULAR',
-    IMG = 'IMG'
+export interface IStreamOutput extends ICellOutput {
+    type: "stream";
+    name: "stdout" | "stderr";
+    text: string;
+}
+export interface IDiaplayOutput extends ICellOutput {
+    type: "display";
+    data: IMimeBundle;
+}
+export interface IExecuteResultOutput extends ICellOutput {
+    type: "result";
+    data: IMimeBundle;
+}
+export interface IError extends ICellOutput {
+    type: "error";
+    ename: string;
+    evalue: string;
+    traceback: any; // todo
 }
