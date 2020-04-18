@@ -1,18 +1,19 @@
 import React from 'react'
 import { ICellViewModel, INotebookViewModel } from 'common/lib/types.js'
-import { Output } from './Output'
-import { Input } from './Input'
+import { Output } from './output'
+import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
 import { store } from '../store'
 import { IState } from '../store/reducer'
 import { connect } from 'react-redux'
+import client from '../socket'
 
 interface Props extends IState {
     cellVM: ICellViewModel
     notebookVM: INotebookViewModel
 }
 
-const Cell: React.FC<Props> = ({ cellVM, notebookVM, connection }) => {
+const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
     const shouldRenderOutput = () => {
         return Boolean(cellVM.cell.outputs.length)
     }
@@ -64,9 +65,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, connection }) => {
     }
 
     const runCell = () => {
-        let io = connection.socket?.io
-        // todo why trigger emit twice ?
-        io?.emit('cell.run', cellVM.cell)
+        client.emit('cell.run', cellVM.cell)
     }
 
     const onInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) => {

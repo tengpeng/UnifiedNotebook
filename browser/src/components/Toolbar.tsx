@@ -3,6 +3,7 @@ import { ICellState, INotebookViewModel, CellType } from 'common/lib/types.js'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
 import { store } from '../store'
+import client from '../socket'
 
 const Toolbar: React.FC<IState> = (props) => {
     // * example notebook data
@@ -51,6 +52,9 @@ const Toolbar: React.FC<IState> = (props) => {
     return (
         <div>
             <button onClick={loadExampleNotebook}>load example notebook</button>
+            <button onClick={() => {
+                client.emit('nb.ping')
+            }}>ping</button>
         </div>
     )
 }

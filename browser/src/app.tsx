@@ -1,5 +1,5 @@
 import React from "react";
-import Notebook from './components/Notebook'
+import Notebook from './components/notebook'
 import { Provider } from 'react-redux'
 import { store } from './store'
 
@@ -9,7 +9,7 @@ const App: React.FC = () => {
       <Provider store={store}>
         <Notebook />
       </Provider>
-    </div >
+    </div>
   )
 }
 

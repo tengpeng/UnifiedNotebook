@@ -1,14 +1,11 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { ICellViewModel } from 'common/lib/types.js'
-import Cell from './Cell'
+import Cell from './cell'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
-import Toolbar from './Toolbar'
-import { store } from '../store'
-import { Socket } from '../socket'
+import Toolbar from './toolbar'
 
-
-const Notebook: React.FC<IState> = ({ connection, notebookVM }) => {
+const Notebook: React.FC<IState> = ({ notebookVM }) => {
 
     const getContent = () => {
         return notebookVM.notebook.cells.map(
@@ -16,17 +13,6 @@ const Notebook: React.FC<IState> = ({ connection, notebookVM }) => {
                 return <Cell key={cellVM.cell.id} cellVM={cellVM} />
             })
     }
-
-    useEffect(() => {
-        if (!connection.socket) {
-            document.title = "server connecting...";
-            let socket = new Socket()
-            socket.init()
-            store.dispatch({ type: 'socket', payload: socket })
-        } else {
-            document.title = "server connected";
-        }
-    }, [connection])
 
     return (
         <>
