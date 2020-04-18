@@ -1,4 +1,4 @@
-import { ICellOutput } from 'common/lib/types.js'
+import { ICellOutput } from 'common/lib/types'
 
 // results callback
 export interface ResultsCallback {

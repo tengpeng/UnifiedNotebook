@@ -66,13 +66,13 @@ export interface ICodeCell extends ICellBase {
 }
 
 // code cell output
-export interface ICellOutput {
-    type: ICellOutputType;
-}
-export type ICellOutputType = "stream" | "display" | "result" | "error"; // zeppelin TEXT HTML IMAGE TABLE can be mimetype
 export interface IMimeBundle {
     [key: string]: string // text/plain text/html ...
 }
+export interface ICellOutput {
+    type: ICellOutputType;
+}
+export type ICellOutputType = "stream" | "display" | "result" | "error" | "clear" | "status"; // zeppelin TEXT HTML IMAGE TABLE can be mimetype
 export interface IStreamOutput extends ICellOutput {
     type: "stream";
     name: "stdout" | "stderr";
@@ -82,13 +82,29 @@ export interface IDiaplayOutput extends ICellOutput {
     type: "display";
     data: IMimeBundle;
 }
+export interface IClearOutput extends ICellOutput {
+    type: "clear";
+}
 export interface IExecuteResultOutput extends ICellOutput {
     type: "result";
     data: IMimeBundle;
 }
-export interface IError extends ICellOutput {
+export interface IStatusOutput extends ICellOutput {
+    type: "status";
+    state: ICellState
+}
+export interface IErrorOutput extends ICellOutput {
     type: "error";
     ename: string;
     evalue: string;
     traceback: any; // todo
+}
+export function isExecuteResultOutput(msg: ICellOutput) {
+    return msg.type === 'result'
+}
+
+// socket response
+export interface IResponse {
+    msg: ICellOutput
+    cell: ICell
 }

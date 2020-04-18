@@ -42,13 +42,13 @@ export declare enum CellType {
 export interface ICodeCell extends ICellBase {
     language: string;
 }
+export interface IMimeBundle {
+    [key: string]: string;
+}
 export interface ICellOutput {
     type: ICellOutputType;
 }
 export declare type ICellOutputType = "stream" | "display" | "result" | "error" | "clear" | "status";
-export interface IMimeBundle {
-    [key: string]: string;
-}
 export interface IStreamOutput extends ICellOutput {
     type: "stream";
     name: "stdout" | "stderr";
@@ -67,11 +67,16 @@ export interface IExecuteResultOutput extends ICellOutput {
 }
 export interface IStatusOutput extends ICellOutput {
     type: "status";
-    state: ICellState
+    state: ICellState;
 }
 export interface IErrorOutput extends ICellOutput {
     type: "error";
     ename: string;
     evalue: string;
     traceback: any;
+}
+export declare function isExecuteResultOutput(msg: ICellOutput): boolean;
+export interface IResponse {
+    msg: ICellOutput;
+    cell: ICell;
 }

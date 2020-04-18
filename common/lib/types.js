@@ -15,3 +15,7 @@ var CellType;
     CellType["PARAMETER"] = "parameter";
 })(CellType = exports.CellType || (exports.CellType = {}));
 ;
+function isExecuteResultOutput(msg) {
+    return msg.type === 'result';
+}
+exports.isExecuteResultOutput = isExecuteResultOutput;

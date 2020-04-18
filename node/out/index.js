@@ -43,72 +43,59 @@ var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
 var dotenv_1 = __importDefault(require("dotenv"));
 var socket_1 = require("./socket");
-var zeppelin_1 = require("./kernel/zeppelin");
 var jupyter_1 = require("./kernel/jupyter");
 dotenv_1.default.config();
 var jupyter;
-var zeppelin;
+// let zeppelin: IZeppelinKernel | undefined
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
     var app, port, notebookSocket;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
                 app = express_1.default();
                 port = process.env.EXPRESS_PORT;
-                return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
+                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()
+                    // jupyter.execute('1+1', msg => { console.log(msg) })
+                    // socketIO
+                ];
             case 1:
                 // init zeppelin and jupyter
-                zeppelin = _b.sent();
-                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()];
-            case 2:
-                jupyter = _b.sent();
-                jupyter.execute('1+1', function (msg) { console.log(msg); });
+                // zeppelin = await new ZeppelinKernel().init()
+                jupyter = _a.sent();
                 notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
-                (_a = notebookSocket.io) === null || _a === void 0 ? void 0 : _a.on('connection', function (socket) {
-                    socket.emit('socketID', socket.client.id);
-                    // restart kernel
-                    socket.on('session:restart', function () { return __awaiter(void 0, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            console.log("TCL: main -> session:restart");
-                            if (jupyter) {
-                                jupyter.restart(function () {
-                                    socket.emit('session:restart:success');
-                                });
-                            }
-                            return [2 /*return*/];
+                console.log("main -> notebookSocket");
+                if (notebookSocket.io) {
+                    notebookSocket.io.on('connection', function (socket) {
+                        socket.emit('socketID', socket.client.id);
+                        socket.on('nb.ping', function () {
+                            console.log("main -> ping");
+                            socket.emit('nb.pong');
                         });
-                    }); });
-                    // run code
-                    socket.on('session:runcell', function (code) { return __awaiter(void 0, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            console.log("TCL: main -> session:runcell");
-                            jupyter === null || jupyter === void 0 ? void 0 : jupyter.execute(code, function (msg) {
-                                socket.emit('session:runcell:success', msg);
+                        // restart kernel
+                        // socket.on('session:restart', async () => {
+                        //     console.log("TCL: main -> session:restart")
+                        //     if (jupyter) {
+                        //         jupyter.restart(() => {
+                        //             socket.emit('session:restart:success')
+                        //         })
+                        //     }
+                        // })
+                        // run code
+                        socket.on('cell.run', function (cell) {
+                            jupyter === null || jupyter === void 0 ? void 0 : jupyter.execute(cell.source, function (msg) {
+                                socket.emit('cell.run.ok', { msg: msg, cell: cell });
                             });
-                            return [2 /*return*/];
                         });
-                    }); });
-                    socket.on('session:runcell:zeppelin', function (code) { return __awaiter(void 0, void 0, void 0, function () {
-                        var paragraphId, res;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    console.log("main -> session:runcell:zeppelin");
-                                    if (!zeppelin) return [3 /*break*/, 3];
-                                    return [4 /*yield*/, zeppelin.createParagraph(zeppelin.noteId, code)];
-                                case 1:
-                                    paragraphId = _a.sent();
-                                    return [4 /*yield*/, zeppelin.runParagraph(zeppelin.noteId, paragraphId)];
-                                case 2:
-                                    res = _a.sent();
-                                    socket.emit('session:runcell:zeppelin:success', res);
-                                    _a.label = 3;
-                                case 3: return [2 /*return*/];
-                            }
-                        });
-                    }); });
-                });
+                        // socket.on('session:runcell:zeppelin', async (code) => {
+                        //     console.log("main -> session:runcell:zeppelin")
+                        //     if (zeppelin) {
+                        //         let paragraphId = await zeppelin.createParagraph(zeppelin.noteId, code)
+                        //         let res = await zeppelin.runParagraph(zeppelin.noteId, paragraphId)
+                        //         socket.emit('session:runcell:zeppelin:success', res)
+                        //     }
+                        // })
+                    });
+                }
                 // express middleware
                 app.use(cors_1.default());
                 app.use(express_1.default.json());

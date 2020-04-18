@@ -7,18 +7,29 @@ import { store } from '../store'
 import { IState } from '../store/reducer'
 import { connect } from 'react-redux'
 
-interface Props {
+interface Props extends IState {
     cellVM: ICellViewModel
     notebookVM: INotebookViewModel
 }
 
-const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
+const Cell: React.FC<Props> = ({ cellVM, notebookVM, connection }) => {
     const shouldRenderOutput = () => {
         return Boolean(cellVM.cell.outputs.length)
     }
 
+    const renderToolbar = () => {
+        return <>
+            <div>
+                <span>language: {cellVM.cell.language}</span>
+            </div>
+            <button onClick={() => { onChangeCellLanguage('python') }}>python</button>
+            <button onClick={() => { onChangeCellLanguage('sh') }}>sh</button>
+            <button onClick={() => { runCell() }}>run cell</button>
+        </>
+    }
+
     const renderInput = () => {
-        return <Input cellVM={cellVM} onRunCell={onRunCell} onKeyDown={onKeyDown} onInputChange={onInputChange} onChangeCellLenguage={onChangeCellLanguage} />
+        return <Input cellVM={cellVM} onKeyDown={onKeyDown} onInputChange={onInputChange} />
     }
 
     const onAddCell = () => {
@@ -52,13 +63,10 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
         }
     }
 
-    const onRunCell = () => {
-        runCell()
-    }
-
     const runCell = () => {
-        // todo
-        console.log("runCell -> sourceCode", cellVM.cell)
+        let io = connection.socket?.io
+        // todo why trigger emit twice ?
+        io?.emit('cell.run', cellVM.cell)
     }
 
     const onInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) => {
@@ -76,6 +84,8 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
 
     return (
         <>
+            {renderToolbar()}
+            <br />
             {renderInput()}
             <br />
             {shouldRenderOutput() ? renderOutput() : null}
