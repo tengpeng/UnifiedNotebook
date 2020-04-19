@@ -1,6 +1,6 @@
 import { createEmptyCodeCellVM } from '../common'
 import cloneDeep from 'lodash/cloneDeep'
-import { INotebookViewModel, ICell, ICellState } from 'common/lib/types.js'
+import { INotebookViewModel } from 'common/lib/types.js'
 
 type IAction = {
     type: string,

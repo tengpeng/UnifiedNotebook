@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel, INotebookViewModel, ICellState } from 'common/lib/types.js'
+import { ICellViewModel, INotebookViewModel, ICellState, CellType } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -15,18 +15,23 @@ interface Props extends IState {
 
 const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
     const shouldRenderOutput = () => {
-        return Boolean(cellVM.cell.outputs.length)
+        return Boolean(cellVM.cell.outputs.length) || cellVM.cell.type === CellType.MARKDOWN
     }
 
     const renderToolbar = () => {
         return <>
             <div>
                 <span>language: {cellVM.cell.language}</span>
-                |<span>state: {ICellState[cellVM.cell.state]}</span>
+                <span> | </span>
+                <span>state: {ICellState[cellVM.cell.state]}</span>
             </div>
+            <span> language: </span>
             <button onClick={() => { onChangeCellLanguage('python') }}>python</button>
             <button onClick={() => { onChangeCellLanguage('sh') }}>sh</button>
             <button onClick={() => { runCell() }}>run cell</button>
+            <span> type: </span>
+            <button onClick={() => { onChangeCellType(CellType.MARKDOWN) }}>markdown</button>
+            <button onClick={() => { onChangeCellType(CellType.CODE) }}>code</button>
         </>
     }
 
@@ -36,6 +41,12 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
 
     const onAddCell = () => {
         store.dispatch({ type: 'addCell' })
+    }
+
+    const onChangeCellType = (type: CellType) => {
+        let newCell = cloneDeep(cellVM.cell)
+        newCell.type = type
+        store.dispatch({ type: 'updateCell', payload: newCell })
     }
 
     const onChangeCellLanguage = (language: string) => {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel } from 'common/lib/types.js'
+import { ICellViewModel, CellType } from 'common/lib/types.js'
 
 interface Props {
     cellVM: ICellViewModel
@@ -9,16 +9,31 @@ interface Props {
 
 export const Input: React.FC<Props> = ({ cellVM, onInputChange, onKeyDown }) => {
 
-    const renderInput = () => {
+    const renderMarkdownInput = () => {
         return <textarea
             style={{ width: '100%', minHeight: "100px" }}
             value={cellVM.cell.source}
+            placeholder="markdown"
             onKeyDown={onKeyDown}
             onChange={(event) => onInputChange(event, cellVM)} ></textarea>
     }
+
+    const renderCodeInput = () => {
+        return <textarea
+            style={{ width: '100%', minHeight: "100px" }}
+            value={cellVM.cell.source}
+            placeholder="code"
+            onKeyDown={onKeyDown}
+            onChange={(event) => onInputChange(event, cellVM)} ></textarea>
+    }
+
+    const render = () => {
+        return cellVM.cell.type === CellType.MARKDOWN ? renderMarkdownInput() : renderCodeInput()
+    }
+
     return (
         <>
-            {renderInput()}
+            {render()}
         </>
     )
 }

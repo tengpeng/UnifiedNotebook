@@ -37,6 +37,19 @@ const Toolbar: React.FC<IState> = (props) => {
                     state: ICellState.Finished,
                 },
                 {
+                    id: 'd55c0afd-dfb8-4e49-8139-0336c85484d0',
+                    type: CellType.MARKDOWN,
+                    source: "#### md math example\n\n$\\sigma_U \\sim \\mathrm{Normal}(0, \\Theta_U^2)$",
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished
+                },
+                {
                     id: 'df62fa94-8d63-4c37-8a65-0501c09f4eba',
                     type: CellType.CODE,
                     source: '$python print("hello wolrd")',
