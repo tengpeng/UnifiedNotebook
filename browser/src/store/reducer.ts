@@ -1,6 +1,6 @@
 import { createEmptyCodeCellVM } from '../common'
 import cloneDeep from 'lodash/cloneDeep'
-import { INotebookViewModel } from 'common/lib/types.js'
+import { INotebookViewModel, ICell, ICellState } from 'common/lib/types.js'
 
 type IAction = {
     type: string,
@@ -26,6 +26,11 @@ export const notebookReducer = (state = initialState, action: IAction) => {
     } else if (action.type === 'updateNotebook') {
         let _ = cloneDeep(state)
         _.notebookVM.notebook = action.payload.notebook
+        return _
+    } else if (action.type === 'updateCell') {
+        let _ = cloneDeep(state)
+        let index = _.notebookVM.notebook.cells.findIndex(cell => cell.cell.id === action.payload.id)
+        _.notebookVM.notebook.cells.splice(index, 1, { cell: action.payload })
         return _
     } else if (action.type === 'updateCells') {
         let _ = cloneDeep(state)

@@ -79,10 +79,11 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
     }
 
     private handleStreamMesssage(msg: KernelMessage.IStreamMsg): IStreamOutput {
+        let serializedText = formatStreamText(concatMultilineStringOutput(msg.content.text))
         return {
             type: 'stream',
             name: msg.content.name,
-            text: formatStreamText(concatMultilineStringOutput(msg.content.text))
+            text: serializedText
         }
     }
 

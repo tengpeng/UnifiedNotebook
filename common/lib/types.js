@@ -19,3 +19,11 @@ function isExecuteResultOutput(msg) {
     return msg.type === 'result';
 }
 exports.isExecuteResultOutput = isExecuteResultOutput;
+function isStatusOutput(msg) {
+    return msg.type === 'status';
+}
+exports.isStatusOutput = isStatusOutput;
+function isStreamOutput(msg) {
+    return msg.type === 'stream';
+}
+exports.isStreamOutput = isStreamOutput;

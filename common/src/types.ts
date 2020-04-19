@@ -102,6 +102,12 @@ export interface IErrorOutput extends ICellOutput {
 export function isExecuteResultOutput(msg: ICellOutput) {
     return msg.type === 'result'
 }
+export function isStatusOutput(msg: ICellOutput) {
+    return msg.type === 'status'
+}
+export function isStreamOutput(msg: ICellOutput) {
+    return msg.type === 'stream'
+}
 
 // socket response
 export interface IResponse {

@@ -141,10 +141,11 @@ var JupyterKernel = /** @class */ (function (_super) {
         };
     };
     JupyterKernel.prototype.handleStreamMesssage = function (msg) {
+        var serializedText = common_1.formatStreamText(common_1.concatMultilineStringOutput(msg.content.text));
         return {
             type: 'stream',
             name: msg.content.name,
-            text: common_1.formatStreamText(common_1.concatMultilineStringOutput(msg.content.text))
+            text: serializedText
         };
     };
     JupyterKernel.prototype.handleDisplayData = function (msg) {

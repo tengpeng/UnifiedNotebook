@@ -76,6 +76,8 @@ export interface IErrorOutput extends ICellOutput {
     traceback: any;
 }
 export declare function isExecuteResultOutput(msg: ICellOutput): boolean;
+export declare function isStatusOutput(msg: ICellOutput): boolean;
+export declare function isStreamOutput(msg: ICellOutput): boolean;
 export interface IResponse {
     msg: ICellOutput;
     cell: ICell;

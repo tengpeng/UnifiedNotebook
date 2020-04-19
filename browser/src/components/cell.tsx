@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel, INotebookViewModel } from 'common/lib/types.js'
+import { ICellViewModel, INotebookViewModel, ICellState } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -22,6 +22,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
         return <>
             <div>
                 <span>language: {cellVM.cell.language}</span>
+                |<span>state: {ICellState[cellVM.cell.state]}</span>
             </div>
             <button onClick={() => { onChangeCellLanguage('python') }}>python</button>
             <button onClick={() => { onChangeCellLanguage('sh') }}>sh</button>

@@ -13,7 +13,20 @@ const Toolbar: React.FC<IState> = (props) => {
                 {
                     id: '4e698ede-c098-4d84-bbce-516d448c4f97',
                     type: CellType.CODE,
-                    source: '1 + 1',
+                    source: '#result example\n\n1 + 1',
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished,
+                },
+                {
+                    id: 'e068c6bb-605c-4933-be67-b0c562eb87e2',
+                    type: CellType.CODE,
+                    source: "#stream example\n\nimport time\n\nprint('start')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('finish')",
                     language: 'python',
                     metadata: {
                         scrollbar: false,
