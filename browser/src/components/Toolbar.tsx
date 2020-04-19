@@ -24,6 +24,19 @@ const Toolbar: React.FC<IState> = (props) => {
                     state: ICellState.Finished,
                 },
                 {
+                    id: '9ef575ed-7882-4233-829a-fbbd58eee0e1',
+                    type: CellType.CODE,
+                    source: "import pandas as pd\npd.options.display.html.table_schema = True # Data Explorer On!\npd.options.display.max_rows = 4\ndf = pd.read_csv('https://gist.githubusercontent.com/rgbkrk/a7984a8788a73e2afb8fd4b89c8ec6de/raw/db8d1db9f878ed448c3cac3eb3c9c0dc5e80891e/2015.csv')\ndf",
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished,
+                },
+                {
                     id: 'e068c6bb-605c-4933-be67-b0c562eb87e2',
                     type: CellType.CODE,
                     source: "#stream example\n\nimport time\n\nprint('start')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('finish')",
@@ -53,6 +66,19 @@ const Toolbar: React.FC<IState> = (props) => {
                     id: 'df62fa94-8d63-4c37-8a65-0501c09f4eba',
                     type: CellType.CODE,
                     source: '$python print("hello wolrd")',
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished,
+                },
+                {
+                    id: '0daedc21-1578-4381-87f1-ade64e869983',
+                    type: CellType.CODE,
+                    source: "# error example \n\n This will throw an error",
                     language: 'python',
                     metadata: {
                         scrollbar: false,

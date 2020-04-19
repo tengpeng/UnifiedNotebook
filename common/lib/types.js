@@ -27,3 +27,7 @@ function isStreamOutput(msg) {
     return msg.type === 'stream';
 }
 exports.isStreamOutput = isStreamOutput;
+function isErrorOutput(msg) {
+    return msg.type === 'error';
+}
+exports.isErrorOutput = isErrorOutput;

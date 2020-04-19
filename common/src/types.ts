@@ -108,6 +108,9 @@ export function isStatusOutput(msg: ICellOutput) {
 export function isStreamOutput(msg: ICellOutput) {
     return msg.type === 'stream'
 }
+export function isErrorOutput(msg: ICellOutput) {
+    return msg.type === 'error'
+}
 
 // socket response
 export interface IResponse {
