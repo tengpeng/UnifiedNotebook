@@ -31,3 +31,7 @@ function isErrorOutput(msg) {
     return msg.type === 'error';
 }
 exports.isErrorOutput = isErrorOutput;
+function isClearOutput(msg) {
+    return msg.type === 'clear';
+}
+exports.isClearOutput = isClearOutput;

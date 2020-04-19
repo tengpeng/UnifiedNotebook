@@ -1,5 +1,5 @@
 import socketClient from 'socket.io-client'
-import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput } from 'common/lib/types'
+import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput } from 'common/lib/types'
 import { store } from './store'
 import cloneDeep from 'lodash/cloneDeep'
 
@@ -24,6 +24,8 @@ function handleRunCellSuccess(res: IResponse) {
         handleStreamOutput(msg as IStreamOutput, cell)
     } else if (isErrorOutput(msg)) {
         handleErrorOutput(msg as IErrorOutput, cell)
+    } else if (isClearOutput(msg)) {
+        handleClearOutput(msg as IClearOutput, cell)
     } else {
         console.warn(`Unknown message ${msg.type} : called by cell ${cell.id}`);
     }
@@ -50,6 +52,12 @@ function handleErrorOutput(msg: IErrorOutput, cell: ICell) {
     let cellVM = getCurrentCellVM(cell)
     let newCell = cloneDeep(cellVM.cell)
     newCell.outputs.push(msg)
+    store.dispatch({ type: 'updateCell', payload: newCell })
+}
+function handleClearOutput(msg: IClearOutput, cell: ICell) {
+    let cellVM = getCurrentCellVM(cell)
+    let newCell = cloneDeep(cellVM.cell)
+    newCell.outputs = []
     store.dispatch({ type: 'updateCell', payload: newCell })
 }
 

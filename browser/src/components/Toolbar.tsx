@@ -37,6 +37,19 @@ const Toolbar: React.FC<IState> = (props) => {
                     state: ICellState.Finished,
                 },
                 {
+                    id: '386bce8a-47e0-4f25-8bd4-04cc0a129ccb',
+                    type: CellType.CODE,
+                    source: "# JSON example\n\nfrom IPython.display import JSON\n\nJSON({'a': [1, 2, 3, 4,], 'b': {'inner1': 'helloworld', 'inner2': 'foobar'}})",
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished,
+                },
+                {
                     id: 'e068c6bb-605c-4933-be67-b0c562eb87e2',
                     type: CellType.CODE,
                     source: "#stream example\n\nimport time\n\nprint('start')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('finish')",
@@ -48,19 +61,6 @@ const Toolbar: React.FC<IState> = (props) => {
                     },
                     outputs: [],
                     state: ICellState.Finished,
-                },
-                {
-                    id: 'd55c0afd-dfb8-4e49-8139-0336c85484d0',
-                    type: CellType.MARKDOWN,
-                    source: "#### md math example\n\n$\\sigma_U \\sim \\mathrm{Normal}(0, \\Theta_U^2)$",
-                    language: 'python',
-                    metadata: {
-                        scrollbar: false,
-                        source_hidden: false,
-                        output_hidden: false
-                    },
-                    outputs: [],
-                    state: ICellState.Finished
                 },
                 {
                     id: 'df62fa94-8d63-4c37-8a65-0501c09f4eba',
@@ -87,7 +87,33 @@ const Toolbar: React.FC<IState> = (props) => {
                     },
                     outputs: [],
                     state: ICellState.Finished,
-                }
+                },
+                {
+                    id: 'a4b70e5a-b8a2-454f-b7fc-ef5953873798',
+                    type: CellType.CODE,
+                    source: "# display example\n\nfrom IPython.display import display, Image, SVG, Math, YouTubeVideo\n\nImage(url='https://www.python.org/static/favicon.ico')",
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished,
+                },
+                {
+                    id: 'd55c0afd-dfb8-4e49-8139-0336c85484d0',
+                    type: CellType.MARKDOWN,
+                    source: "#### md math example\n\n$\\sigma_U \\sim \\mathrm{Normal}(0, \\Theta_U^2)$",
+                    language: 'python',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished
+                },
             ]
         }
         let data: INotebookViewModel = {
@@ -107,6 +133,7 @@ const Toolbar: React.FC<IState> = (props) => {
             <button onClick={() => {
                 client.emit('nb.ping')
             }}>ping</button>
+            {/* <a download="notebookJSON.json" href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(store.getState(), null, 2))}>download</a> */}
         </div>
     )
 }

@@ -24,10 +24,13 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
                 <span>language: {cellVM.cell.language}</span>
                 <span> | </span>
                 <span>state: {ICellState[cellVM.cell.state]}</span>
+                <span> | </span>
+                <span>id: <input type="text" style={{ width: '250px' }} defaultValue={cellVM.cell.id} /></span>
             </div>
             <span> language: </span>
             <button onClick={() => { onChangeCellLanguage('python') }}>python</button>
             <button onClick={() => { onChangeCellLanguage('sh') }}>sh</button>
+            <span> run: </span>
             <button onClick={() => { runCell() }}>run cell</button>
             <span> type: </span>
             <button onClick={() => { onChangeCellType(CellType.MARKDOWN) }}>markdown</button>
