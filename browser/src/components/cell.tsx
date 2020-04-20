@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernel } from 'common/lib/types.js'
+import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -11,6 +11,7 @@ import client from '../socket'
 interface Props extends IState {
     cellVM: ICellViewModel
     notebookVM: INotebookViewModel
+    kernels: IKernelSpecs
 }
 
 const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
@@ -29,7 +30,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             </div>
             <span> language: </span>
             <select name="" id="" onChange={e => { onChangeCellLanguage(e.target.value) }}>
-                {kernels.map((kernel: IKernel, index: number) => <option key={index} value={kernel.name}>{kernel.displayName}</option>)}
+                {kernels.map((kernel, index: number) => <option key={index} value={JSON.stringify({ name: kernel.name, backend: kernel.backend })}>{kernel.displayName}</option>)}
             </select>
             <span> run: </span>
             <button onClick={() => { runCell() }}>run cell</button>
@@ -53,11 +54,13 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
         store.dispatch({ type: 'updateCell', payload: newCell })
     }
 
-    const onChangeCellLanguage = (language: string) => {
-        console.log("onChangeCellLanguage -> language", language)
+    const onChangeCellLanguage = (args: string) => {
+        console.log("onChangeCellLanguage -> languageWithBackend", args)
+        let languageWithBackend = JSON.parse(args)
         let newCellVMList = copyCellVMList()
         let index = findCellVMIndex(cellVM)
-        newCellVMList[index].cell.language = language
+        newCellVMList[index].cell.language = languageWithBackend.name
+        newCellVMList[index].cell.backend = languageWithBackend.backend
         store.dispatch({ type: 'updateCells', payload: newCellVMList })
     }
 

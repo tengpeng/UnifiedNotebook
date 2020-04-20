@@ -1,6 +1,6 @@
 import { createEmptyCodeCellVM } from '../common'
 import cloneDeep from 'lodash/cloneDeep'
-import { INotebookViewModel, IKernel, IKernels } from 'common/lib/types'
+import { INotebookViewModel, IKernelSpecs } from 'common/lib/types'
 
 type IAction = {
     type: string,
@@ -8,7 +8,7 @@ type IAction = {
 }
 export type IState = {
     notebookVM: INotebookViewModel
-    kernels: IKernels
+    kernels: IKernelSpecs
 }
 
 const initialState: IState = {

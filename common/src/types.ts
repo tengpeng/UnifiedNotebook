@@ -63,6 +63,7 @@ export enum CellType {
 // code cell
 export interface ICodeCell extends ICellBase {
     language: string;
+    backend: string;
 }
 
 // code cell output
@@ -124,9 +125,10 @@ export interface IResponse {
 /* -------------------------------------------------------------------------- */
 /*                                   Kernel                                   */
 /* -------------------------------------------------------------------------- */
-export interface IKernel {
+export interface IKernelSpec {
     language: string,
     name: string,
-    displayName: string
+    displayName: string,
+    backend: string
 }
-export type IKernels = IKernel[]
+export type IKernelSpecs = IKernelSpec[]

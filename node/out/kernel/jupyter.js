@@ -58,34 +58,11 @@ var log = bunyan_1.createLogger({ name: 'Kernel' });
 var JupyterKernel = /** @class */ (function (_super) {
     __extends(JupyterKernel, _super);
     function JupyterKernel() {
-        return _super.call(this) || this;
+        var _this = _super.call(this) || this;
+        _this.name = 'Jupyter';
+        return _this;
     }
     // list running kernels
-    JupyterKernel.kernels = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var specs, kernels, _i, _a, val, _b, displayName, language, name_1;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
-                    case 0: return [4 /*yield*/, services_1.KernelSpecAPI.getSpecs()];
-                    case 1:
-                        specs = _c.sent();
-                        if (specs && specs.kernelspecs) {
-                            kernels = [];
-                            for (_i = 0, _a = Object.values(specs.kernelspecs); _i < _a.length; _i++) {
-                                val = _a[_i];
-                                _b = val, displayName = _b.display_name, language = _b.language, name_1 = _b.name;
-                                kernels.push({ displayName: displayName, language: language, name: name_1 });
-                            }
-                            return [2 /*return*/, kernels];
-                        }
-                        else {
-                            return [2 /*return*/, []];
-                        }
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
     JupyterKernel.prototype.runningKernels = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -303,7 +280,7 @@ var JupyterKernel = /** @class */ (function (_super) {
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
-                        console.log("JupyterKernel -> execute -> cell", cell);
+                        console.log("JupyterKernel -> execute -> cell");
                         return [4 /*yield*/, ((_a = this.kernel) === null || _a === void 0 ? void 0 : _a.info)];
                     case 1:
                         currentKernel = _c.sent();
@@ -334,6 +311,32 @@ var JupyterKernel = /** @class */ (function (_super) {
                             //     let reply = this.handleResult(message)
                             //     reply && onResults(reply)
                             // };
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    // list all kernels
+    JupyterKernel.prototype.kernels = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var specs, kernels, _i, _a, val, _b, displayName, language, name_1;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0: return [4 /*yield*/, services_1.KernelSpecAPI.getSpecs()];
+                    case 1:
+                        specs = _c.sent();
+                        if (specs && specs.kernelspecs) {
+                            kernels = [];
+                            for (_i = 0, _a = Object.values(specs.kernelspecs); _i < _a.length; _i++) {
+                                val = _a[_i];
+                                _b = val, displayName = _b.display_name, language = _b.language, name_1 = _b.name;
+                                kernels.push({ displayName: displayName, language: language, name: name_1, backend: this.name });
+                            }
+                            return [2 /*return*/, kernels];
+                        }
+                        else {
+                            return [2 /*return*/, []];
                         }
                         return [2 /*return*/];
                 }

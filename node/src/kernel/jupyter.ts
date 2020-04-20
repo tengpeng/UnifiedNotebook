@@ -2,37 +2,26 @@ import { createLogger } from 'bunyan'
 import { KernelMessage, KernelAPI, KernelManager, Kernel, KernelSpecAPI } from "@jupyterlab/services";
 import { ISessionOptions } from '@jupyterlab/services/lib/session/session';
 import { KernelBase, ResultsCallback } from './kernel'
-import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell } from 'common/lib/types'
+import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs } from 'common/lib/types'
 import { formatStreamText, concatMultilineStringOutput } from '../utils/common'
 import { ISpecModel } from '@jupyterlab/services/lib/kernelspec/restapi';
 
 const log = createLogger({ name: 'Kernel' })
 
 export interface IJupyterKernel {
+    kernels(): Promise<IKernelSpecs>
     runningKernels(): void
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
 }
 
 export class JupyterKernel extends KernelBase implements IJupyterKernel {
+    name = 'Jupyter'
     kernel: Kernel.IKernelConnection | undefined
 
     constructor() { super() }
 
     // list running kernels
-    static async kernels() {
-        let specs = await KernelSpecAPI.getSpecs()
-        if (specs && specs.kernelspecs) {
-            let kernels = []
-            for (const val of Object.values(specs.kernelspecs)) {
-                let { display_name: displayName, language, name } = val as ISpecModel
-                kernels.push({ displayName, language, name })
-            }
-            return kernels
-        } else {
-            return []
-        }
-    }
     async runningKernels() {
         return KernelAPI.listRunning()
     }
@@ -162,7 +151,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
 
     // execute
     async execute(cell: ICodeCell, onResults: ResultsCallback) {
-        console.log("JupyterKernel -> execute -> cell", cell)
+        console.log("JupyterKernel -> execute -> cell")
         let currentKernel = await this.kernel?.info
         let currentKernelName = currentKernel?.language_info.name
         let kernelName = cell.language
@@ -187,6 +176,21 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
             //     let reply = this.handleResult(message)
             //     reply && onResults(reply)
             // };
+        }
+    }
+
+    // list all kernels
+    async kernels() {
+        let specs = await KernelSpecAPI.getSpecs()
+        if (specs && specs.kernelspecs) {
+            let kernels = []
+            for (const val of Object.values(specs.kernelspecs)) {
+                let { display_name: displayName, language, name } = val as ISpecModel
+                kernels.push({ displayName, language, name, backend: this.name })
+            }
+            return kernels
+        } else {
+            return []
         }
     }
 }

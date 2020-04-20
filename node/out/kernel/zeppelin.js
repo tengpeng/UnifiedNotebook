@@ -1,4 +1,17 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -41,12 +54,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var node_fetch_1 = __importDefault(require("node-fetch"));
 var bunyan_1 = require("bunyan");
+var kernel_1 = require("./kernel");
 var log = bunyan_1.createLogger({ name: 'Zeppelin' });
 /* -------------------------------------------------------------------------- */
 /*                              zeppelin rest api                             */
 /* -------------------------------------------------------------------------- */
 var Api;
 (function (Api) {
+    Api.listInterpreter = function () {
+        return '/api/interpreter';
+    };
     Api.listNote = function () {
         return '/api/notebook';
     };
@@ -59,6 +76,9 @@ var Api;
     Api.createParagraph = function (noteId) {
         return '/api/notebook/' + noteId + '/paragraph';
     };
+    Api.updateParagraph = function (noteId, paragraphId) {
+        return '/api/notebook/' + noteId + '/paragraph/' + paragraphId;
+    };
     Api.runParagraph = function (noteId, paragraphId) {
         return '/api/notebook/run/' + noteId + '/' + paragraphId;
     };
@@ -66,14 +86,19 @@ var Api;
 /* -------------------------------------------------------------------------- */
 /*                           zeppelin fetch request                           */
 /* -------------------------------------------------------------------------- */
-var ZeppelinKernel = /** @class */ (function () {
+var ZeppelinKernel = /** @class */ (function (_super) {
+    __extends(ZeppelinKernel, _super);
     function ZeppelinKernel(server, port) {
         if (server === void 0) { server = process.env.ZEPPELIN_PROTOCOL + "://" + process.env.ZEPPELIN_HOST; }
         if (port === void 0) { port = process.env.ZEPPELIN_PORT; }
-        this.noteId = '';
-        this.server = server;
-        this.port = port;
-        this.url = this.server + ':' + this.port;
+        var _this = _super.call(this) || this;
+        _this.name = 'Zeppelin';
+        _this.noteId = '';
+        _this.paragraphId = '';
+        _this.server = server;
+        _this.port = port;
+        _this.url = _this.server + ':' + _this.port;
+        return _this;
     }
     ZeppelinKernel.prototype.sendMsg = function (method, url, msg) {
         return __awaiter(this, void 0, void 0, function () {
@@ -105,6 +130,40 @@ var ZeppelinKernel = /** @class */ (function () {
             });
         });
     };
+    ZeppelinKernel.prototype.init = function () {
+        var _a;
+        return __awaiter(this, void 0, void 0, function () {
+            var _b, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        this.deleteAllNote();
+                        _b = this;
+                        return [4 /*yield*/, this.createNote()];
+                    case 1:
+                        _b.noteId = (_a = _d.sent()) !== null && _a !== void 0 ? _a : '';
+                        _c = this;
+                        return [4 /*yield*/, this.createParagraph(this.noteId, '')];
+                    case 2:
+                        _c.paragraphId = _d.sent();
+                        return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    ZeppelinKernel.prototype.listInterpreter = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var res;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.sendMsg('GET', this.url + Api.listInterpreter())];
+                    case 1:
+                        res = _a.sent();
+                        return [2 /*return*/, this.handleResponse(res)];
+                }
+            });
+        });
+    };
     ZeppelinKernel.prototype.createNote = function (name) {
         return __awaiter(this, void 0, void 0, function () {
             var res;
@@ -115,63 +174,6 @@ var ZeppelinKernel = /** @class */ (function () {
                         res = _a.sent();
                         return [4 /*yield*/, this.handleResponse(res)];
                     case 2: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    ZeppelinKernel.prototype.init = function () {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
-                    case 0:
-                        this.deleteAllNote();
-                        _b = this;
-                        return [4 /*yield*/, this.createNote()];
-                    case 1:
-                        _b.noteId = (_a = _c.sent()) !== null && _a !== void 0 ? _a : '';
-                        return [2 /*return*/, this];
-                }
-            });
-        });
-    };
-    ZeppelinKernel.prototype.deleteNote = function (noteId) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.sendMsg('DELETE', this.url + Api.deleteNote(noteId))];
-                    case 1:
-                        res = _a.sent();
-                        return [4 /*yield*/, this.handleResponse(res)];
-                    case 2: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    ZeppelinKernel.prototype.createParagraph = function (paragraphId, text) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.sendMsg('POST', this.url + Api.createParagraph(paragraphId), { title: '', text: text })];
-                    case 1:
-                        res = _a.sent();
-                        return [2 /*return*/, this.handleResponse(res)];
-                }
-            });
-        });
-    };
-    ZeppelinKernel.prototype.runParagraph = function (noteId, paragraphId) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.sendMsg('POST', this.url + Api.runParagraph(noteId, paragraphId))];
-                    case 1:
-                        res = _a.sent();
-                        return [2 /*return*/, this.handleResponse(res)];
                 }
             });
         });
@@ -206,7 +208,148 @@ var ZeppelinKernel = /** @class */ (function () {
             });
         });
     };
+    ZeppelinKernel.prototype.deleteNote = function (noteId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.sendMsg('DELETE', this.url + Api.deleteNote(noteId))];
+                    case 1:
+                        res = _a.sent();
+                        return [4 /*yield*/, this.handleResponse(res)];
+                    case 2: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    ZeppelinKernel.prototype.createParagraph = function (noteId, text) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.sendMsg('POST', this.url + Api.createParagraph(noteId), { title: '', text: text })];
+                    case 1:
+                        res = _a.sent();
+                        return [2 /*return*/, this.handleResponse(res)];
+                }
+            });
+        });
+    };
+    ZeppelinKernel.prototype.updateParagraph = function (noteId, paragraphId, text) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.sendMsg('PUT', this.url + Api.updateParagraph(noteId, paragraphId), { title: '', text: text })];
+                    case 1:
+                        res = _a.sent();
+                        return [2 /*return*/, this.handleResponse(res)];
+                }
+            });
+        });
+    };
+    ZeppelinKernel.prototype.runParagraph = function (noteId, paragraphId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.sendMsg('POST', this.url + Api.runParagraph(noteId, paragraphId))];
+                    case 1:
+                        res = _a.sent();
+                        return [2 /*return*/, this.handleResponse(res)];
+                }
+            });
+        });
+    };
+    ZeppelinKernel.prototype.isSuccessMsg = function (msg) {
+        return msg.code === 'SUCCESS';
+    };
+    ZeppelinKernel.prototype.isErrorMsg = function (msg) {
+        return msg.code === 'ERROR';
+    };
+    ZeppelinKernel.prototype.isTextData = function (data) {
+        return data.type === 'TEXT';
+    };
+    ZeppelinKernel.prototype.handleResultData = function (msg, success) {
+        // success: if message code is 'SUCCESS'
+        try {
+            // todo msg data handler
+            console.log("handleResultData -> handleResultData", msg);
+        }
+        catch (error) {
+        }
+        // todo
+        return true;
+    };
+    ZeppelinKernel.prototype.handleResult = function (msg) {
+        if (this.isSuccessMsg(msg)) {
+            return this.handleResultData(msg, true);
+        }
+        else if (this.isErrorMsg(msg)) {
+            return this.handleResultData(msg, false);
+        }
+        else {
+            log.warn("Unknown message " + msg.code);
+            return undefined;
+        }
+    };
+    ZeppelinKernel.prototype.kernels = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var interpreters, kernels, _i, _a, val, _b, displayName, language, name_1;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0: return [4 /*yield*/, this.listInterpreter()];
+                    case 1:
+                        interpreters = _c.sent();
+                        kernels = [];
+                        for (_i = 0, _a = Object.values(interpreters); _i < _a.length; _i++) {
+                            val = _a[_i];
+                            _b = val, displayName = _b.name, language = _b.id, name_1 = _b.id;
+                            kernels.push({ displayName: displayName, language: language, name: name_1, backend: this.name });
+                        }
+                        return [2 /*return*/, kernels];
+                }
+            });
+        });
+    };
+    ZeppelinKernel.prototype.runningKernels = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/];
+            });
+        });
+    };
+    ZeppelinKernel.prototype.shutdownAllKernel = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/];
+            });
+        });
+    };
+    ZeppelinKernel.prototype.execute = function (cell, onResults) {
+        return __awaiter(this, void 0, void 0, function () {
+            var source, res, reply;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        source = cell.source;
+                        source = "%" + cell.language + "\n" + source;
+                        return [4 /*yield*/, this.updateParagraph(this.noteId, this.paragraphId, source)];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.runParagraph(this.noteId, this.paragraphId)];
+                    case 2:
+                        res = _a.sent();
+                        if (res) {
+                            reply = this.handleResult(res);
+                            reply && onResults;
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ZeppelinKernel;
-}());
+}(kernel_1.KernelBase));
 exports.ZeppelinKernel = ZeppelinKernel;
 //# sourceMappingURL=zeppelin.js.map

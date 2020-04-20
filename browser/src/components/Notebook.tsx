@@ -27,7 +27,7 @@ const Notebook: React.FC<IState> = ({ notebookVM }) => {
         setInterval(() => {
             getRunningKernels()
         }, 2000)
-    }, [null])
+    }, [])
 
     return (
         <>

@@ -1,5 +1,5 @@
 import socketClient from 'socket.io-client'
-import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernels } from 'common/lib/types'
+import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs } from 'common/lib/types'
 import { store } from './store'
 import cloneDeep from 'lodash/cloneDeep'
 
@@ -63,7 +63,7 @@ function handleClearOutput(msg: IClearOutput, cell: ICell) {
     store.dispatch({ type: 'updateCell', payload: newCell })
 }
 
-function handleGetKernels(msg: IKernels) {
+function handleGetKernels(msg: IKernelSpecs) {
     store.dispatch({ type: 'updateKernels', payload: msg })
 }
 

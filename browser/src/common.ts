@@ -7,6 +7,7 @@ export const createEmptyCodeCell = (id?: string): ICodeCell => {
         type: CellType.CODE,
         source: '',
         language: 'python3', // todo testing select python3 by default
+        backend: 'Jupyter',
         metadata: {
             scrollbar: true,
             source_hidden: false,

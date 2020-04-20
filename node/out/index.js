@@ -44,23 +44,25 @@ var cors_1 = __importDefault(require("cors"));
 var dotenv_1 = __importDefault(require("dotenv"));
 var socket_1 = require("./socket");
 var jupyter_1 = require("./kernel/jupyter");
+var zeppelin_1 = require("./kernel/zeppelin");
+var backend_1 = require("./backend");
 dotenv_1.default.config();
-var jupyter;
-// let zeppelin: IZeppelinKernel | undefined
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, notebookSocket;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var app, port, backendManager, _a, _b, _c, _d, notebookSocket;
+    return __generator(this, function (_e) {
+        switch (_e.label) {
             case 0:
                 app = express_1.default();
                 port = process.env.EXPRESS_PORT;
-                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()
-                    // socketIO
-                ];
+                backendManager = new backend_1.BackendManager();
+                _b = (_a = backendManager).register;
+                return [4 /*yield*/, new jupyter_1.JupyterKernel().init()];
             case 1:
-                // init zeppelin and jupyter
-                // zeppelin = await new ZeppelinKernel().init()
-                jupyter = _a.sent();
+                _b.apply(_a, [_e.sent()]);
+                _d = (_c = backendManager).register;
+                return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
+            case 2:
+                _d.apply(_c, [_e.sent()]);
                 notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
                 console.log("main -> notebookSocket");
                 if (notebookSocket.io) {
@@ -73,7 +75,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             var kernels;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, jupyter_1.JupyterKernel.kernels()];
+                                    case 0: return [4 /*yield*/, backendManager.kernels()];
                                     case 1:
                                         kernels = _a.sent();
                                         socket.emit('kernel.list.ok', kernels);
@@ -82,13 +84,13 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             });
                         }); });
                         socket.on('kernel.shutdown.all', function () {
-                            jupyter === null || jupyter === void 0 ? void 0 : jupyter.shutdownAllKernel();
+                            backendManager.getBackend('Jupyter').shutdownAllKernel();
                         });
                         socket.on('kernel.running.list', function () { return __awaiter(void 0, void 0, void 0, function () {
                             var kernels;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, (jupyter === null || jupyter === void 0 ? void 0 : jupyter.runningKernels())];
+                                    case 0: return [4 /*yield*/, backendManager.getBackend('Jupyter').runningKernels()];
                                     case 1:
                                         kernels = _a.sent();
                                         socket.emit('kernel.running.list.ok', kernels);
@@ -96,27 +98,19 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                 }
                             });
                         }); });
-                        // run code
+                        // // run code
                         socket.on('cell.run', function (cell) { return __awaiter(void 0, void 0, void 0, function () {
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, (jupyter === null || jupyter === void 0 ? void 0 : jupyter.execute(cell, function (msg) {
+                                    case 0: return [4 /*yield*/, backendManager.execute(cell, function (msg) {
                                             socket.emit('cell.run.ok', { msg: msg, cell: cell });
-                                        }))];
+                                        })];
                                     case 1:
                                         _a.sent();
                                         return [2 /*return*/];
                                 }
                             });
                         }); });
-                        // socket.on('session:runcell:zeppelin', async (code) => {
-                        //     console.log("main -> session:runcell:zeppelin")
-                        //     if (zeppelin) {
-                        //         let paragraphId = await zeppelin.createParagraph(zeppelin.noteId, code)
-                        //         let res = await zeppelin.runParagraph(zeppelin.noteId, paragraphId)
-                        //         socket.emit('session:runcell:zeppelin:success', res)
-                        //     }
-                        // })
                     });
                 }
                 // express middleware

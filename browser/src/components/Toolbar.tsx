@@ -15,6 +15,20 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.CODE,
                     source: '#result example\n\n1 + 1',
                     language: 'python',
+                    backend: 'Jupyter',
+                    metadata: {
+                        scrollbar: false,
+                        source_hidden: false,
+                        output_hidden: false
+                    },
+                    outputs: [],
+                    state: ICellState.Finished,
+                }, {
+                    id: 'a53f768a-1858-4f03-86f6-09c10a1a0f5c',
+                    type: CellType.CODE,
+                    source: "// javascript get token example\n\nfs = require('fs')\n\ndata = fs.readFileSync(path.resolve(__dirname, './config.json'))\n\nconsole.log(JSON.parse(data.toString()).token)",
+                    language: 'javascript',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -28,6 +42,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.CODE,
                     source: "import pandas as pd\npd.options.display.html.table_schema = True # Data Explorer On!\npd.options.display.max_rows = 4\ndf = pd.read_csv('https://gist.githubusercontent.com/rgbkrk/a7984a8788a73e2afb8fd4b89c8ec6de/raw/db8d1db9f878ed448c3cac3eb3c9c0dc5e80891e/2015.csv')\ndf",
                     language: 'python',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -41,6 +56,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.CODE,
                     source: "# JSON example\n\nfrom IPython.display import JSON\n\nJSON({'a': [1, 2, 3, 4,], 'b': {'inner1': 'helloworld', 'inner2': 'foobar'}})",
                     language: 'python',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -54,19 +70,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.CODE,
                     source: "#stream example\n\nimport time\n\nprint('start')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('finish')",
                     language: 'python',
-                    metadata: {
-                        scrollbar: false,
-                        source_hidden: false,
-                        output_hidden: false
-                    },
-                    outputs: [],
-                    state: ICellState.Finished,
-                },
-                {
-                    id: 'df62fa94-8d63-4c37-8a65-0501c09f4eba',
-                    type: CellType.CODE,
-                    source: '$python print("hello wolrd")',
-                    language: 'python',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -80,6 +84,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.CODE,
                     source: "# error example \n\n This will throw an error",
                     language: 'python',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -93,6 +98,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.CODE,
                     source: "# display example\n\nfrom IPython.display import display, Image, SVG, Math, YouTubeVideo\n\nImage(url='https://www.python.org/static/favicon.ico')",
                     language: 'python',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
@@ -106,6 +112,7 @@ const Toolbar: React.FC<IState> = (props) => {
                     type: CellType.MARKDOWN,
                     source: "#### md math example\n\n$\\sigma_U \\sim \\mathrm{Normal}(0, \\Theta_U^2)$",
                     language: 'python',
+                    backend: 'Jupyter',
                     metadata: {
                         scrollbar: false,
                         source_hidden: false,
