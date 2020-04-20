@@ -120,3 +120,13 @@ export interface IResponse {
     msg: ICellOutput
     cell: ICell
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                   Kernel                                   */
+/* -------------------------------------------------------------------------- */
+export interface IKernel {
+    language: string,
+    name: string,
+    displayName: string
+}
+export type IKernels = IKernel[]

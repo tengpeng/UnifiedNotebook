@@ -84,3 +84,9 @@ export interface IResponse {
     msg: ICellOutput;
     cell: ICell;
 }
+export interface IKernel {
+    language: string;
+    name: string;
+    displayName: string;
+}
+export declare type IKernels = IKernel[];

@@ -127,12 +127,17 @@ const Toolbar: React.FC<IState> = (props) => {
         store.dispatch({ type: 'updateNotebook', payload: data })
     }
 
+    const shutDownAllKernels = () => {
+        client.emit('kernel.shutdown.all')
+    }
+
     return (
         <div>
             <button onClick={loadExampleNotebook}>load example notebook</button>
             <button onClick={() => {
                 client.emit('nb.ping')
             }}>ping</button>
+            <button onClick={shutDownAllKernels}>shutdown all kernels</button>
             {/* <a download="notebookJSON.json" href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(store.getState(), null, 2))}>download</a> */}
         </div>
     )

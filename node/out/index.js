@@ -55,7 +55,6 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                 app = express_1.default();
                 port = process.env.EXPRESS_PORT;
                 return [4 /*yield*/, new jupyter_1.JupyterKernel().init()
-                    // jupyter.execute('1+1', msg => { console.log(msg) })
                     // socketIO
                 ];
             case 1:
@@ -68,24 +67,48 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                     notebookSocket.io.on('connection', function (socket) {
                         socket.emit('socketID', socket.client.id);
                         socket.on('nb.ping', function () {
-                            console.log("main -> ping");
                             socket.emit('nb.pong');
                         });
-                        // restart kernel
-                        // socket.on('session:restart', async () => {
-                        //     console.log("TCL: main -> session:restart")
-                        //     if (jupyter) {
-                        //         jupyter.restart(() => {
-                        //             socket.emit('session:restart:success')
-                        //         })
-                        //     }
-                        // })
-                        // run code
-                        socket.on('cell.run', function (cell) {
-                            jupyter === null || jupyter === void 0 ? void 0 : jupyter.execute(cell.source, function (msg) {
-                                socket.emit('cell.run.ok', { msg: msg, cell: cell });
+                        socket.on('kernel.list', function () { return __awaiter(void 0, void 0, void 0, function () {
+                            var kernels;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, jupyter_1.JupyterKernel.kernels()];
+                                    case 1:
+                                        kernels = _a.sent();
+                                        socket.emit('kernel.list.ok', kernels);
+                                        return [2 /*return*/];
+                                }
                             });
+                        }); });
+                        socket.on('kernel.shutdown.all', function () {
+                            jupyter === null || jupyter === void 0 ? void 0 : jupyter.shutdownAllKernel();
                         });
+                        socket.on('kernel.running.list', function () { return __awaiter(void 0, void 0, void 0, function () {
+                            var kernels;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, (jupyter === null || jupyter === void 0 ? void 0 : jupyter.runningKernels())];
+                                    case 1:
+                                        kernels = _a.sent();
+                                        socket.emit('kernel.running.list.ok', kernels);
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); });
+                        // run code
+                        socket.on('cell.run', function (cell) { return __awaiter(void 0, void 0, void 0, function () {
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, (jupyter === null || jupyter === void 0 ? void 0 : jupyter.execute(cell, function (msg) {
+                                            socket.emit('cell.run.ok', { msg: msg, cell: cell });
+                                        }))];
+                                    case 1:
+                                        _a.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); });
                         // socket.on('session:runcell:zeppelin', async (code) => {
                         //     console.log("main -> session:runcell:zeppelin")
                         //     if (zeppelin) {

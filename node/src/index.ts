@@ -2,11 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { NotebookSocket } from './socket'
-import socketIO from 'socket.io'
-import { ZeppelinKernel, IZeppelinKernel } from './kernel/zeppelin'
 import { JupyterKernel, IJupyterKernel } from './kernel/jupyter'
-import { ICell } from 'common/lib/types'
-import { createServer } from 'http'
+import { ICodeCell } from 'common/lib/types'
 
 dotenv.config()
 
@@ -21,8 +18,6 @@ const main = async () => {
     // zeppelin = await new ZeppelinKernel().init()
     jupyter = await new JupyterKernel().init()
 
-    // jupyter.execute('1+1', msg => { console.log(msg) })
-
     // socketIO
     let notebookSocket = new NotebookSocket().createSocketServer(app, 80)
     console.log("main -> notebookSocket")
@@ -30,21 +25,22 @@ const main = async () => {
         notebookSocket.io.on('connection', (socket: SocketIO.Socket) => {
             socket.emit('socketID', socket.client.id)
             socket.on('nb.ping', () => {
-                console.log("main -> ping")
                 socket.emit('nb.pong')
             })
-            // restart kernel
-            // socket.on('session:restart', async () => {
-            //     console.log("TCL: main -> session:restart")
-            //     if (jupyter) {
-            //         jupyter.restart(() => {
-            //             socket.emit('session:restart:success')
-            //         })
-            //     }
-            // })
+            socket.on('kernel.list', async () => {
+                let kernels = await JupyterKernel.kernels()
+                socket.emit('kernel.list.ok', kernels)
+            })
+            socket.on('kernel.shutdown.all', () => {
+                jupyter?.shutdownAllKernel()
+            })
+            socket.on('kernel.running.list', async () => {
+                let kernels = await jupyter?.runningKernels()
+                socket.emit('kernel.running.list.ok', kernels)
+            })
             // run code
-            socket.on('cell.run', (cell: ICell) => {
-                jupyter?.execute(cell.source, msg => {
+            socket.on('cell.run', async (cell: ICodeCell) => {
+                await jupyter?.execute(cell, msg => {
                     socket.emit('cell.run.ok', { msg, cell })
                 })
             })

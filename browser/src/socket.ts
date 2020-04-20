@@ -1,11 +1,13 @@
 import socketClient from 'socket.io-client'
-import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput } from 'common/lib/types'
+import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernels } from 'common/lib/types'
 import { store } from './store'
 import cloneDeep from 'lodash/cloneDeep'
 
 let client = socketClient('http://localhost:80', { reconnection: true })
 client.on('socketID', handleSocketID)
 client.on('cell.run.ok', handleRunCellSuccess)
+client.on('kernel.list.ok', handleGetKernels)
+client.on('kernel.running.list.ok', (res: any) => { console.log(JSON.stringify(res.map((item: any) => item.name))) })
 client.on('nb.pong', () => console.log('pong'))
 
 // event
@@ -59,6 +61,10 @@ function handleClearOutput(msg: IClearOutput, cell: ICell) {
     let newCell = cloneDeep(cellVM.cell)
     newCell.outputs = []
     store.dispatch({ type: 'updateCell', payload: newCell })
+}
+
+function handleGetKernels(msg: IKernels) {
+    store.dispatch({ type: 'updateKernels', payload: msg })
 }
 
 // store

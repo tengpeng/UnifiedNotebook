@@ -6,7 +6,7 @@ export const createEmptyCodeCell = (id?: string): ICodeCell => {
         id: id ?? uuid(),
         type: CellType.CODE,
         source: '',
-        language: 'python',
+        language: 'python3', // todo testing select python3 by default
         metadata: {
             scrollbar: true,
             source_hidden: false,

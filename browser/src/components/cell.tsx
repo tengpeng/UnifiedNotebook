@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel, INotebookViewModel, ICellState, CellType } from 'common/lib/types.js'
+import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernel } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -13,7 +13,7 @@ interface Props extends IState {
     notebookVM: INotebookViewModel
 }
 
-const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
+const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
     const shouldRenderOutput = () => {
         return Boolean(cellVM.cell.outputs.length) || cellVM.cell.type === CellType.MARKDOWN
     }
@@ -21,15 +21,16 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
     const renderToolbar = () => {
         return <>
             <div>
-                <span>language: {cellVM.cell.language}</span>
+                <span>language: {kernels.find(kernel => kernel.name === cellVM.cell.language)?.displayName}</span>
                 <span> | </span>
                 <span>state: {ICellState[cellVM.cell.state]}</span>
                 <span> | </span>
                 <span>id: <input type="text" style={{ width: '250px' }} defaultValue={cellVM.cell.id} /></span>
             </div>
             <span> language: </span>
-            <button onClick={() => { onChangeCellLanguage('python') }}>python</button>
-            <button onClick={() => { onChangeCellLanguage('sh') }}>sh</button>
+            <select name="" id="" onChange={e => { onChangeCellLanguage(e.target.value) }}>
+                {kernels.map((kernel: IKernel, index: number) => <option key={index} value={kernel.name}>{kernel.displayName}</option>)}
+            </select>
             <span> run: </span>
             <button onClick={() => { runCell() }}>run cell</button>
             <span> type: </span>
@@ -53,6 +54,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM }) => {
     }
 
     const onChangeCellLanguage = (language: string) => {
+        console.log("onChangeCellLanguage -> language", language)
         let newCellVMList = copyCellVMList()
         let index = findCellVMIndex(cellVM)
         newCellVMList[index].cell.language = language

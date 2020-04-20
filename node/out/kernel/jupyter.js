@@ -48,63 +48,173 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var path = __importStar(require("path"));
-var utils = __importStar(require("../utils/notebook"));
 var bunyan_1 = require("bunyan");
 var services_1 = require("@jupyterlab/services");
-var consts_1 = require("../consts");
 var kernel_1 = require("./kernel");
 var types_1 = require("common/lib/types");
 var common_1 = require("../utils/common");
 var log = bunyan_1.createLogger({ name: 'Kernel' });
-var testNotebook = path.join(consts_1.NOTEBOOK_PATH, 'test1.ipynb');
-var testKernelName = 'python';
 var JupyterKernel = /** @class */ (function (_super) {
     __extends(JupyterKernel, _super);
     function JupyterKernel() {
-        var _this = _super.call(this) || this;
-        _this.sessionManager = new services_1.SessionManager({ kernelManager: new services_1.KernelManager() });
-        _this.options = {
-            path: testNotebook,
-            type: utils.isNotebookFile(testNotebook) ? 'notebook' : '',
-            name: utils.getFileName(testNotebook),
-            kernel: {
-                name: testKernelName
-            }
-        };
-        return _this;
+        return _super.call(this) || this;
     }
-    JupyterKernel.prototype.init = function (opts) {
+    // list running kernels
+    JupyterKernel.kernels = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this;
-                        return [4 /*yield*/, this.sessionManager.startNew(opts !== null && opts !== void 0 ? opts : this.options)];
+            var specs, kernels, _i, _a, val, _b, displayName, language, name_1;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0: return [4 /*yield*/, services_1.KernelSpecAPI.getSpecs()];
                     case 1:
-                        _a.session = _b.sent();
-                        return [2 /*return*/, this];
+                        specs = _c.sent();
+                        if (specs && specs.kernelspecs) {
+                            kernels = [];
+                            for (_i = 0, _a = Object.values(specs.kernelspecs); _i < _a.length; _i++) {
+                                val = _a[_i];
+                                _b = val, displayName = _b.display_name, language = _b.language, name_1 = _b.name;
+                                kernels.push({ displayName: displayName, language: language, name: name_1 });
+                            }
+                            return [2 /*return*/, kernels];
+                        }
+                        else {
+                            return [2 /*return*/, []];
+                        }
+                        return [2 /*return*/];
                 }
             });
         });
     };
-    JupyterKernel.prototype.restart = function (onRestarted) {
-        var _a, _b;
-        var future = (_b = (_a = this.session) === null || _a === void 0 ? void 0 : _a.kernel) === null || _b === void 0 ? void 0 : _b.restart();
-        future && future.then(function () {
-            if (onRestarted)
-                onRestarted();
+    JupyterKernel.prototype.runningKernels = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, services_1.KernelAPI.listRunning()];
+            });
         });
     };
+    JupyterKernel.prototype.shutdownKernel = function (id) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, services_1.KernelAPI.shutdownKernel(id)];
+            });
+        });
+    };
+    JupyterKernel.prototype.shutdownAllKernel = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var kernels, promises;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.runningKernels()];
+                    case 1:
+                        kernels = _a.sent();
+                        promises = kernels.map(function (kernel) { return _this.shutdownKernel(kernel.id); });
+                        return [2 /*return*/, Promise.all(promises)];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.isKernelRunning = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            var kernels, runningKernel;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.runningKernels()];
+                    case 1:
+                        kernels = _a.sent();
+                        runningKernel = kernels.findIndex(function (kernel) { return kernel.name === name; });
+                        return [2 /*return*/, runningKernel !== -1];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.getRunningKernel = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            var kernels;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.runningKernels()];
+                    case 1:
+                        kernels = _a.sent();
+                        return [2 /*return*/, kernels.find(function (kernel) { return kernel.name === name; })];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.startNewKernel = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, services_1.KernelAPI.startNew({ name: name })];
+            });
+        });
+    };
+    JupyterKernel.prototype.getKernelInfo = function () {
+        var _a;
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_b) {
+                return [2 /*return*/, (_a = this.kernel) === null || _a === void 0 ? void 0 : _a.info];
+            });
+        });
+    };
+    JupyterKernel.prototype.startKernel = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            var kernel;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.isKernelRunning(name)];
+                    case 1:
+                        if (!_a.sent()) return [3 /*break*/, 3];
+                        return [4 /*yield*/, this.getRunningKernel(name)];
+                    case 2:
+                        kernel = _a.sent();
+                        return [3 /*break*/, 5];
+                    case 3: return [4 /*yield*/, this.startNewKernel(name)];
+                    case 4:
+                        kernel = _a.sent();
+                        _a.label = 5;
+                    case 5: return [2 /*return*/, kernel];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.connectToKernel = function (model) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, new services_1.KernelManager().connectTo({ model: model })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.switchToKernel = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            var kernel, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, this.startKernel(name)];
+                    case 1:
+                        kernel = _b.sent();
+                        if (!kernel) return [3 /*break*/, 3];
+                        _a = this;
+                        return [4 /*yield*/, this.connectToKernel(kernel)];
+                    case 2:
+                        _a.kernel = _b.sent();
+                        _b.label = 3;
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.init = function (opts) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this];
+            });
+        });
+    };
+    // result handler
     JupyterKernel.prototype.handleResult = function (msg) {
         try {
             // todo status message
@@ -184,25 +294,51 @@ var JupyterKernel = /** @class */ (function (_super) {
             state: state
         };
     };
-    JupyterKernel.prototype.execute = function (code, onResults) {
-        var _this = this;
+    // execute
+    JupyterKernel.prototype.execute = function (cell, onResults) {
         var _a, _b;
-        var future = (_b = (_a = this.session) === null || _a === void 0 ? void 0 : _a.kernel) === null || _b === void 0 ? void 0 : _b.requestExecute({ code: code });
-        if (future) {
-            future.onIOPub = function (message) {
-                var reply = _this.handleResult(message);
-                reply && onResults(reply);
-            };
-            // todo other message
-            // future.onReply = message => {
-            //     let reply = this.handleResult(message)
-            //     reply && onResults(reply)
-            // };
-            // future.onStdin = message => {
-            //     let reply = this.handleResult(message)
-            //     reply && onResults(reply)
-            // };
-        }
+        return __awaiter(this, void 0, void 0, function () {
+            var currentKernel, currentKernelName, kernelName, info, future;
+            var _this = this;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        console.log("JupyterKernel -> execute -> cell", cell);
+                        return [4 /*yield*/, ((_a = this.kernel) === null || _a === void 0 ? void 0 : _a.info)];
+                    case 1:
+                        currentKernel = _c.sent();
+                        currentKernelName = currentKernel === null || currentKernel === void 0 ? void 0 : currentKernel.language_info.name;
+                        kernelName = cell.language;
+                        if (!(currentKernelName !== kernelName)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, this.switchToKernel(kernelName)];
+                    case 2:
+                        _c.sent();
+                        return [4 /*yield*/, this.getKernelInfo()];
+                    case 3:
+                        info = _c.sent();
+                        console.log("JupyterKernel -> execute -> switchToKernel", info === null || info === void 0 ? void 0 : info.language_info.name);
+                        _c.label = 4;
+                    case 4:
+                        future = (_b = this.kernel) === null || _b === void 0 ? void 0 : _b.requestExecute({ code: cell.source });
+                        if (future) {
+                            future.onIOPub = function (message) {
+                                var reply = _this.handleResult(message);
+                                reply && onResults(reply);
+                            };
+                            // todo other message
+                            // future.onReply = message => {
+                            //     let reply = this.handleResult(message)
+                            //     reply && onResults(reply)
+                            // };
+                            // future.onStdin = message => {
+                            //     let reply = this.handleResult(message)
+                            //     reply && onResults(reply)
+                            // };
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     return JupyterKernel;
 }(kernel_1.KernelBase));

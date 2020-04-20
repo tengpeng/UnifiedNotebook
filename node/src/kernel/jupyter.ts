@@ -1,53 +1,88 @@
-import * as path from 'path'
-import * as utils from '../utils/notebook'
 import { createLogger } from 'bunyan'
-import { Session, SessionManager, KernelMessage, KernelManager } from "@jupyterlab/services";
+import { KernelMessage, KernelAPI, KernelManager, Kernel, KernelSpecAPI } from "@jupyterlab/services";
 import { ISessionOptions } from '@jupyterlab/services/lib/session/session';
-import { NOTEBOOK_PATH } from '../consts'
 import { KernelBase, ResultsCallback } from './kernel'
-import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState } from 'common/lib/types'
+import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell } from 'common/lib/types'
 import { formatStreamText, concatMultilineStringOutput } from '../utils/common'
+import { ISpecModel } from '@jupyterlab/services/lib/kernelspec/restapi';
 
 const log = createLogger({ name: 'Kernel' })
 
-const testNotebook = path.join(NOTEBOOK_PATH, 'test1.ipynb')
-const testKernelName = 'python'
-
 export interface IJupyterKernel {
-    restart(onRestarted?: Function): void
-    execute(code: string, onResults: ResultsCallback): void
+    runningKernels(): void
+    shutdownAllKernel(): void
+    execute(cell: ICodeCell, onResults: ResultsCallback): void
 }
 
 export class JupyterKernel extends KernelBase implements IJupyterKernel {
-    session: Session.ISessionConnection | undefined
-    sessionManager: SessionManager
-    options: Session.ISessionOptions
+    kernel: Kernel.IKernelConnection | undefined
 
-    constructor() {
-        super()
-        this.sessionManager = new SessionManager({ kernelManager: new KernelManager() });
-        this.options = {
-            path: testNotebook,
-            type: utils.isNotebookFile(testNotebook) ? 'notebook' : '',
-            name: utils.getFileName(testNotebook),
-            kernel: {
-                name: testKernelName
+    constructor() { super() }
+
+    // list running kernels
+    static async kernels() {
+        let specs = await KernelSpecAPI.getSpecs()
+        if (specs && specs.kernelspecs) {
+            let kernels = []
+            for (const val of Object.values(specs.kernelspecs)) {
+                let { display_name: displayName, language, name } = val as ISpecModel
+                kernels.push({ displayName, language, name })
             }
+            return kernels
+        } else {
+            return []
+        }
+    }
+    async runningKernels() {
+        return KernelAPI.listRunning()
+    }
+    private async shutdownKernel(id: string) {
+        return KernelAPI.shutdownKernel(id)
+    }
+    async shutdownAllKernel() {
+        let kernels = await this.runningKernels()
+        let promises = kernels.map(kernel => this.shutdownKernel(kernel.id))
+        return Promise.all(promises)
+    }
+    private async isKernelRunning(name: string) {
+        let kernels = await this.runningKernels()
+        let runningKernel = kernels.findIndex(kernel => kernel.name === name)
+        return runningKernel !== -1
+    }
+    private async getRunningKernel(name: string) {
+        let kernels = await this.runningKernels()
+        return kernels.find(kernel => kernel.name === name)
+    }
+    private async startNewKernel(name: string) {
+        return KernelAPI.startNew({ name })
+    }
+    private async getKernelInfo() {
+        return this.kernel?.info
+    }
+    private async startKernel(name: string) {
+        let kernel
+        if (await this.isKernelRunning(name)) {
+            kernel = await this.getRunningKernel(name)
+        } else {
+            kernel = await this.startNewKernel(name)
+        }
+        return kernel
+    }
+    private async connectToKernel(model: KernelAPI.IModel) {
+        return await new KernelManager().connectTo({ model })
+    }
+    async switchToKernel(name: string) {
+        let kernel = await this.startKernel(name)
+        if (kernel) {
+            this.kernel = await this.connectToKernel(kernel)
         }
     }
 
     async init(opts?: ISessionOptions) {
-        this.session = await this.sessionManager.startNew(opts ?? this.options)
         return this
     }
 
-    restart(onRestarted?: Function) {
-        const future = this.session?.kernel?.restart();
-        future && future.then(() => {
-            if (onRestarted) onRestarted();
-        });
-    }
-
+    // result handler
     private handleResult(msg: KernelMessage.IIOPubMessage) {
         try {
             // todo status message
@@ -125,8 +160,19 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         }
     }
 
-    execute(code: string, onResults: ResultsCallback) {
-        const future = this.session?.kernel?.requestExecute({ code });
+    // execute
+    async execute(cell: ICodeCell, onResults: ResultsCallback) {
+        console.log("JupyterKernel -> execute -> cell", cell)
+        let currentKernel = await this.kernel?.info
+        let currentKernelName = currentKernel?.language_info.name
+        let kernelName = cell.language
+        if (currentKernelName !== kernelName) {
+            await this.switchToKernel(kernelName)
+            let info = await this.getKernelInfo()
+            console.log("JupyterKernel -> execute -> switchToKernel", info?.language_info.name)
+        }
+
+        const future = this.kernel?.requestExecute({ code: cell.source });
         if (future) {
             future.onIOPub = message => {
                 let reply = this.handleResult(message)
