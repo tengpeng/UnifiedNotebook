@@ -270,16 +270,50 @@ var ZeppelinKernel = /** @class */ (function (_super) {
     ZeppelinKernel.prototype.isTextData = function (data) {
         return data.type === 'TEXT';
     };
+    ZeppelinKernel.prototype.isHTMLData = function (data) {
+        return data.type === 'HTML';
+    };
+    ZeppelinKernel.prototype.handleMIME = function (result) {
+        if (this.isTextData(result)) {
+            return {
+                type: 'text/plain',
+                data: result.data
+            };
+        }
+        else if (this.isHTMLData(result)) {
+            return {
+                type: 'text/html',
+                data: result.data
+            };
+        }
+        else {
+            return {
+                type: 'unknown',
+                data: result.data
+            };
+        }
+    };
     ZeppelinKernel.prototype.handleResultData = function (msg, success) {
+        var _this = this;
         // success: if message code is 'SUCCESS'
-        try {
-            // todo msg data handler
-            console.log("handleResultData -> handleResultData", msg);
-        }
-        catch (error) {
-        }
-        // todo
-        return true;
+        var results = msg.msg;
+        var dataMap = {};
+        var dataList = results.map(function (result) {
+            return _this.handleMIME(result);
+        });
+        dataList.forEach(function (data) {
+            if (data.type in dataMap) {
+                dataMap[data.type] += "\n" + data.data;
+            }
+            else {
+                dataMap[data.type] = data.data;
+            }
+        });
+        var executeResultOutput = {
+            type: 'result',
+            data: dataMap
+        };
+        return executeResultOutput;
     };
     ZeppelinKernel.prototype.handleResult = function (msg) {
         if (this.isSuccessMsg(msg)) {
@@ -340,9 +374,10 @@ var ZeppelinKernel = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.runParagraph(this.noteId, this.paragraphId)];
                     case 2:
                         res = _a.sent();
+                        console.log("execute -> res", res);
                         if (res) {
                             reply = this.handleResult(res);
-                            reply && onResults;
+                            reply && onResults(reply);
                         }
                         return [2 /*return*/];
                 }

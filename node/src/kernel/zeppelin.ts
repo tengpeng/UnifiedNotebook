@@ -1,7 +1,7 @@
 import fetch, { Response } from 'node-fetch'
 import { createLogger } from 'bunyan'
 import { KernelBase, ResultsCallback } from './kernel'
-import { IKernelSpecs, ICodeCell } from 'common/lib/types'
+import { IKernelSpecs, ICodeCell, IExecuteResultOutput } from 'common/lib/types'
 
 const log = createLogger({ name: 'Zeppelin' })
 
@@ -149,16 +149,48 @@ export class ZeppelinKernel extends KernelBase implements IZeppelinKernel {
         return data.type === 'TEXT'
     }
 
+    private isHTMLData(data: IMsgData) {
+        return data.type === 'HTML'
+    }
+
+    private handleMIME(result: IMsgData) {
+        if (this.isTextData(result)) {
+            return {
+                type: 'text/plain',
+                data: result.data
+            }
+        } else if (this.isHTMLData(result)) {
+            return {
+                type: 'text/html',
+                data: result.data
+            }
+        } else {
+            return {
+                type: 'unknown',
+                data: result.data
+            }
+        }
+    }
+
     private handleResultData(msg: IMsg, success: boolean) {
         // success: if message code is 'SUCCESS'
-        try {
-            // todo msg data handler
-            console.log("handleResultData -> handleResultData", msg)
-        } catch (error) {
-
+        let results = msg.msg
+        let dataMap: { [key: string]: string } = {}
+        let dataList = results.map(result => {
+            return this.handleMIME(result)
+        })
+        dataList.forEach(data => {
+            if (data.type in dataMap) {
+                dataMap[data.type] += `\n${data.data}`
+            } else {
+                dataMap[data.type] = data.data
+            }
+        })
+        let executeResultOutput: IExecuteResultOutput = {
+            type: 'result',
+            data: dataMap
         }
-        // todo
-        return true
+        return executeResultOutput
     }
 
     private handleResult(msg: IMsg) {
@@ -195,10 +227,11 @@ export class ZeppelinKernel extends KernelBase implements IZeppelinKernel {
         source = `%${cell.language}\n${source}`
         await this.updateParagraph(this.noteId, this.paragraphId, source)
         let res: IMsg = await this.runParagraph(this.noteId, this.paragraphId)
+        console.log("execute -> res", res)
 
         if (res) {
             let reply = this.handleResult(res)
-            reply && onResults
+            reply && onResults(reply)
         }
     }
 }
