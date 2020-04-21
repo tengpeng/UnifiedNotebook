@@ -169,6 +169,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
             tempCell.source = codeToExecute
             let dataString: string
             this.execute(tempCell, output => {
+                console.log("JupyterKernel -> constructor -> output", output)
                 if (isExecuteResultOutput(output)) {
                     dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
                 } if (isStreamOutput(output)) {
@@ -233,6 +234,11 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
             print(${temp_variable})
             del ${temp_variable}
             `
+        } else if (language === 'javascript') {
+            code = `
+            ${temp_variable} = JSON.stringify(${variable})
+            console.log(global.${temp_variable})
+            delete global.${temp_variable}`
         } else {
             // todo to support other language
             code = ''
@@ -246,6 +252,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         let exposeOutput: IExposeOutput = {
             data: output
         }
+        console.log("JupyterKernel -> expose -> exposeOutput", exposeOutput)
         return exposeOutput
     }
 }

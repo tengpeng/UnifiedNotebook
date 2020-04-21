@@ -1,5 +1,5 @@
 import socketClient from 'socket.io-client'
-import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, ICodeCell, IExposePayload } from 'common/lib/types'
+import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposePayload } from 'common/lib/types'
 import { store } from './store'
 import cloneDeep from 'lodash/cloneDeep'
 

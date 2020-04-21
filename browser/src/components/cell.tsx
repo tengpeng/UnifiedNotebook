@@ -70,9 +70,9 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
     }
 
     const onClearCellOutput = () => {
-        let newCell = cloneDeep(cellVM.cell)
-        newCell.outputs = []
-        store.dispatch({ type: 'updateCell', payload: newCell })
+        let newCellVM = cloneDeep(cellVM)
+        newCellVM.cell.outputs = []
+        store.dispatch({ type: 'updateCellVM', payload: newCellVM })
     }
 
     const onChangeCellType = (type: CellType) => {

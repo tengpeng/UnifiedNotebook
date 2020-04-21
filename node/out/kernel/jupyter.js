@@ -315,6 +315,7 @@ var JupyterKernel = /** @class */ (function (_super) {
                                     tempCell = cloneDeep_1.default(payload.cell);
                                     tempCell.source = codeToExecute;
                                     this.execute(tempCell, function (output) {
+                                        console.log("JupyterKernel -> constructor -> output", output);
                                         if (types_1.isExecuteResultOutput(output)) {
                                             dataString = output.data['text/plain'];
                                         }
@@ -404,6 +405,9 @@ var JupyterKernel = /** @class */ (function (_super) {
         if (language === 'python3') {
             code = "\n            import json\n            " + temp_variable + " = json.dumps(" + variable + ")\n            print(" + temp_variable + ")\n            del " + temp_variable + "\n            ";
         }
+        else if (language === 'javascript') {
+            code = "\n            " + temp_variable + " = JSON.stringify(" + variable + ")\n            console.log(global." + temp_variable + ")\n            delete global." + temp_variable;
+        }
         else {
             // todo to support other language
             code = '';
@@ -423,6 +427,7 @@ var JupyterKernel = /** @class */ (function (_super) {
                         exposeOutput = {
                             data: output
                         };
+                        console.log("JupyterKernel -> expose -> exposeOutput", exposeOutput);
                         return [2 /*return*/, exposeOutput];
                 }
             });

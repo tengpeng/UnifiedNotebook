@@ -23,7 +23,6 @@ const initialState: IState = {
 export const notebookReducer = (state = initialState, action: IAction) => {
     let _ = cloneDeep(state)
     let index: number
-    let payload: any
     switch (action.type) {
         // notebook
         case 'updateNotebook':
