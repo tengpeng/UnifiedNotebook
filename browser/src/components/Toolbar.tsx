@@ -16,7 +16,7 @@ const Toolbar: React.FC<IState> = (props) => {
             notebook: { cells: [] }
         }
         temp.cells.forEach(cellItem => {
-            data.notebook.cells.push({ cell: cellItem })
+            data.notebook.cells.push({ cell: cellItem, exposed: '' })
         })
         console.log("loadExampleNotebook -> data", data)
 

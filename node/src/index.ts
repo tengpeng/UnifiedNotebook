@@ -5,7 +5,7 @@ import { NotebookSocket } from './socket'
 import { JupyterKernel, IJupyterKernel } from './kernel/jupyter'
 import { ZeppelinKernel } from './kernel/zeppelin'
 import { BackendManager } from './backend'
-import { ICodeCell } from 'common/lib/types'
+import { ICodeCell, IExposeOutput, IExposePayload } from 'common/lib/types'
 
 dotenv.config()
 
@@ -17,6 +17,11 @@ const main = async () => {
     const backendManager = new BackendManager()
     backendManager.register(await new JupyterKernel().init())
     backendManager.register(await new ZeppelinKernel().init())
+
+    // exposed variable
+    const exposedMap: {
+        [key: string]: any
+    } = {}
 
     // socketIO
     let notebookSocket = new NotebookSocket().createSocketServer(app, 80)
@@ -43,6 +48,17 @@ const main = async () => {
                 await backendManager.execute(cell, msg => {
                     socket.emit('cell.run.ok', { msg, cell })
                 })
+            })
+            // expose
+            socket.on('expose.variable', async (payload: IExposePayload) => {
+                let jsonData = await backendManager.expose(payload)
+                let store = {
+                    id: payload.cell.id,
+                    payload,
+                    jsonData
+                }
+                exposedMap[store.id] = store
+                socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData, payload })
             })
         })
     }

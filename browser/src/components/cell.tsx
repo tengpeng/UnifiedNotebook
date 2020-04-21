@@ -1,5 +1,5 @@
-import React from 'react'
-import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs } from 'common/lib/types.js'
+import React, { useState } from 'react'
+import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs, IExposePayload } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -15,6 +15,8 @@ interface Props extends IState {
 }
 
 const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
+    const [exposeVar, setExposeVar] = useState('')
+
     const shouldRenderOutput = () => {
         return Boolean(cellVM.cell.outputs.length) || cellVM.cell.type === CellType.MARKDOWN
     }
@@ -39,7 +41,24 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             <button onClick={() => { onChangeCellType(CellType.CODE) }}>code</button>
             <span> output: </span>
             <button onClick={() => { onClearCellOutput() }}>clear</button>
+            <br />
+            <span> expose var: </span>
+            <input type="text" value={exposeVar} placeholder="The variable to expose" onKeyDown={(e) => { onExposeSubmit(e) }} onChange={(e) => { onExposeVar(e) }} />
+            <span> exposed var:  </span>
+            {cellVM.exposed}
         </>
+    }
+
+    const onExposeSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.keyCode === 13) {
+            if (cellVM.cell.type !== CellType.CODE) return
+            let payload: IExposePayload = { variable: exposeVar, cell: cellVM.cell }
+            client.emit('expose.variable', payload)
+        }
+    }
+    const onExposeVar = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value
+        setExposeVar(val)
     }
 
     const renderInput = () => {
@@ -97,10 +116,9 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
     }
 
     const onInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) => {
-        let index = findCellVMIndex(cellVM)
-        let newCellVMList = copyCellVMList()
-        newCellVMList[index].cell.source = event.target.value
-        store.dispatch({ type: 'updateCells', payload: newCellVMList })
+        let newCellVM = cloneDeep(cellVM)
+        newCellVM.cell.source = event.target.value
+        store.dispatch({ type: 'updateCellVM', payload: newCellVM })
     }
 
     const renderOutput = () => {

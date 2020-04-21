@@ -1,4 +1,4 @@
-import { ICellOutput, ICodeCell, IKernelSpecs } from 'common/lib/types'
+import { ICellOutput, ICodeCell, IKernelSpecs, IExposeOutput, IExposePayload } from 'common/lib/types'
 
 // results callback
 export interface ResultsCallback {
@@ -13,6 +13,7 @@ export interface IKernelBase {
     runningKernels(): void
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
+    expose(payload: IExposePayload): Promise<IExposeOutput>
 }
 
 export class KernelBase implements IKernelBase {
@@ -30,6 +31,9 @@ export class KernelBase implements IKernelBase {
         throw new Error("Method not implemented.");
     }
     execute(cell: ICodeCell, onResults: ResultsCallback): void {
+        throw new Error("Method not implemented.");
+    }
+    expose(payload: IExposePayload): Promise<IExposeOutput> {
         throw new Error("Method not implemented.");
     }
 }

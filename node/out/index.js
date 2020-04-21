@@ -48,7 +48,7 @@ var zeppelin_1 = require("./kernel/zeppelin");
 var backend_1 = require("./backend");
 dotenv_1.default.config();
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, backendManager, _a, _b, _c, _d, notebookSocket;
+    var app, port, backendManager, _a, _b, _c, _d, exposedMap, notebookSocket;
     return __generator(this, function (_e) {
         switch (_e.label) {
             case 0:
@@ -63,6 +63,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                 return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
             case 2:
                 _d.apply(_c, [_e.sent()]);
+                exposedMap = {};
                 notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
                 console.log("main -> notebookSocket");
                 if (notebookSocket.io) {
@@ -107,6 +108,25 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                         })];
                                     case 1:
                                         _a.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); });
+                        // expose
+                        socket.on('expose.variable', function (payload) { return __awaiter(void 0, void 0, void 0, function () {
+                            var jsonData, store;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, backendManager.expose(payload)];
+                                    case 1:
+                                        jsonData = _a.sent();
+                                        store = {
+                                            id: payload.cell.id,
+                                            payload: payload,
+                                            jsonData: jsonData
+                                        };
+                                        exposedMap[store.id] = store;
+                                        socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData: jsonData, payload: payload });
                                         return [2 /*return*/];
                                 }
                             });

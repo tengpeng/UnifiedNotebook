@@ -1,6 +1,6 @@
-import { ICellState, CellType } from 'common/lib/types.js'
+import { ICellState, CellType, ICell } from 'common/lib/types.js'
 
-export function exampleCells() {
+export function exampleCells(): { cells: ICell[] } {
     return {
         cells: [
             {

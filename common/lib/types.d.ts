@@ -3,6 +3,7 @@ export interface INotebookViewModel {
 }
 export interface ICellViewModel {
     cell: ICell;
+    exposed: string;
 }
 export interface INotebook {
     cells: ICellViewModel[];
@@ -92,3 +93,10 @@ export interface IKernelSpec {
     backend: string;
 }
 export declare type IKernelSpecs = IKernelSpec[];
+export interface IExposePayload {
+    variable: string;
+    cell: ICodeCell;
+}
+export interface IExposeOutput {
+    data: string;
+}

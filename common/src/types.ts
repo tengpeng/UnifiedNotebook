@@ -7,7 +7,8 @@ export interface INotebookViewModel {
 }
 // cell vm in react
 export interface ICellViewModel {
-    cell: ICell
+    cell: ICell;
+    exposed: string
 }
 
 /* -------------------------------------------------------------------------- */
@@ -132,3 +133,14 @@ export interface IKernelSpec {
     backend: string
 }
 export type IKernelSpecs = IKernelSpec[]
+
+/* -------------------------------------------------------------------------- */
+/*                                  ExposeVar                                 */
+/* -------------------------------------------------------------------------- */
+export interface IExposePayload {
+    variable: string;
+    cell: ICodeCell;
+}
+export interface IExposeOutput {
+    data: string;
+}

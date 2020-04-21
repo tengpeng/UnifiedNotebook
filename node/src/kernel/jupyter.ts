@@ -2,9 +2,10 @@ import { createLogger } from 'bunyan'
 import { KernelMessage, KernelAPI, KernelManager, Kernel, KernelSpecAPI } from "@jupyterlab/services";
 import { ISessionOptions } from '@jupyterlab/services/lib/session/session';
 import { KernelBase, ResultsCallback } from './kernel'
-import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs } from 'common/lib/types'
+import { IExposeOutput, IExposePayload, IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput } from 'common/lib/types'
 import { formatStreamText, concatMultilineStringOutput } from '../utils/common'
 import { ISpecModel } from '@jupyterlab/services/lib/kernelspec/restapi';
+import cloneDeep from 'lodash/cloneDeep'
 
 const log = createLogger({ name: 'Kernel' })
 
@@ -13,6 +14,7 @@ export interface IJupyterKernel {
     runningKernels(): void
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
+    expose(payload: IExposePayload): Promise<IExposeOutput>
 }
 
 export class JupyterKernel extends KernelBase implements IJupyterKernel {
@@ -21,7 +23,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
 
     constructor() { super() }
 
-    // list running kernels
+    // kernel handler
     async runningKernels() {
         return KernelAPI.listRunning()
     }
@@ -64,6 +66,16 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         let kernel = await this.startKernel(name)
         if (kernel) {
             this.kernel = await this.connectToKernel(kernel)
+        }
+    }
+    private async switchKernelIfNeeded(cell: ICodeCell) {
+        let currentKernel = await this.kernel?.info
+        let currentKernelName = currentKernel?.language_info.name
+        let cellKernelName = cell.language
+        if (currentKernelName !== cellKernelName) {
+            await this.switchToKernel(cellKernelName)
+            let info = await this.getKernelInfo()
+            console.log("JupyterKernel -> execute -> switchToKernel", info?.language_info.name)
         }
     }
 
@@ -149,18 +161,32 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         }
     }
 
+    // repl
+    private async repl(payload: IExposePayload, codeToExecute: string): Promise<string> {
+        return new Promise(async (res, rej) => {
+            await this.switchKernelIfNeeded(payload.cell)
+            let tempCell = cloneDeep(payload.cell)
+            tempCell.source = codeToExecute
+            let dataString: string
+            this.execute(tempCell, output => {
+                if (isExecuteResultOutput(output)) {
+                    dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
+                } if (isStreamOutput(output)) {
+                    dataString = (output as IStreamOutput).text
+                } else {
+                    dataString = ''
+                }
+                // get text/plain data from the first output
+                console.log("JupyterKernel -> constructor -> dataString", dataString)
+                dataString && res(dataString)
+            })
+        })
+    }
+
     // execute
     async execute(cell: ICodeCell, onResults: ResultsCallback) {
         console.log("JupyterKernel -> execute -> cell")
-        let currentKernel = await this.kernel?.info
-        let currentKernelName = currentKernel?.language_info.name
-        let kernelName = cell.language
-        if (currentKernelName !== kernelName) {
-            await this.switchToKernel(kernelName)
-            let info = await this.getKernelInfo()
-            console.log("JupyterKernel -> execute -> switchToKernel", info?.language_info.name)
-        }
-
+        await this.switchKernelIfNeeded(cell)
         const future = this.kernel?.requestExecute({ code: cell.source });
         if (future) {
             future.onIOPub = message => {
@@ -192,5 +218,34 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         } else {
             return []
         }
+    }
+
+    // expose variable
+    private prepareCode(payload: IExposePayload) {
+        let language = payload.cell.language
+        let variable = payload.variable
+        let temp_variable = 'temp_unified_notebook_var'
+        let code
+        if (language === 'python3') {
+            code = `
+            import json
+            ${temp_variable} = json.dumps(${variable})
+            print(${temp_variable})
+            del ${temp_variable}
+            `
+        } else {
+            // todo to support other language
+            code = ''
+        }
+        return code
+    }
+
+    async expose(payload: IExposePayload) {
+        let codeToExecute = this.prepareCode(payload)
+        let output = await this.repl(payload, codeToExecute)
+        let exposeOutput: IExposeOutput = {
+            data: output
+        }
+        return exposeOutput
     }
 }

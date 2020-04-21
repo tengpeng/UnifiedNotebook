@@ -1,11 +1,12 @@
 import { IKernelBase, ResultsCallback } from './kernel/kernel'
-import { IKernelSpecs, ICodeCell } from 'common/lib/types'
+import { IKernelSpecs, ICodeCell, IExposePayload, IExposeOutput } from 'common/lib/types'
 
 interface IBackendManager {
     kernels(): Promise<IKernelSpecs>
     register(kernel: IKernelBase): void
     getBackend(name: string): IKernelBase
     execute(cell: ICodeCell, onResults: ResultsCallback): void
+    expose(payload: IExposePayload): Promise<IExposeOutput>
 }
 
 export class BackendManager implements IBackendManager {
@@ -33,5 +34,9 @@ export class BackendManager implements IBackendManager {
     execute(cell: ICodeCell, onResults: ResultsCallback) {
         let backend = this.getBackend(cell.backend)
         backend.execute(cell, onResults)
+    }
+
+    async expose(payload: IExposePayload) {
+        return this.getBackend(payload.cell.backend).expose(payload)
     }
 }

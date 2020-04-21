@@ -1,6 +1,6 @@
 import { createEmptyCodeCellVM } from '../common'
 import cloneDeep from 'lodash/cloneDeep'
-import { INotebookViewModel, IKernelSpecs } from 'common/lib/types'
+import { INotebookViewModel, IKernelSpecs, ICellViewModel } from 'common/lib/types'
 
 type IAction = {
     type: string,
@@ -22,6 +22,8 @@ const initialState: IState = {
 
 export const notebookReducer = (state = initialState, action: IAction) => {
     let _ = cloneDeep(state)
+    let index: number
+    let payload: any
     switch (action.type) {
         // notebook
         case 'updateNotebook':
@@ -35,11 +37,16 @@ export const notebookReducer = (state = initialState, action: IAction) => {
             _.notebookVM.notebook.cells.push(createEmptyCodeCellVM())
             return _
         case 'updateCell':
-            let index = _.notebookVM.notebook.cells.findIndex(cell => cell.cell.id === action.payload.id)
-            _.notebookVM.notebook.cells.splice(index, 1, { cell: action.payload })
+            index = _.notebookVM.notebook.cells.findIndex(cell => cell.cell.id === action.payload.id)
+            _.notebookVM.notebook.cells.splice(index, 1, { cell: action.payload, exposed: '' })
             return _
         case 'updateCells':
             _.notebookVM.notebook.cells = action.payload
+            return _
+        // cellVM
+        case 'updateCellVM':
+            index = _.notebookVM.notebook.cells.findIndex(cell => cell.cell.id === (action.payload as ICellViewModel).cell.id)
+            _.notebookVM.notebook.cells.splice(index, 1, action.payload)
             return _
         // kernel
         case 'updateKernels':

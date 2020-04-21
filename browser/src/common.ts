@@ -21,7 +21,8 @@ export const createEmptyCodeCell = (id?: string): ICodeCell => {
 
 export const createCellVM = (emptyCell: ICodeCell): ICellViewModel => {
     let emptyCellVM = {
-        cell: emptyCell
+        cell: emptyCell,
+        exposed: ''
     }
     return emptyCellVM
 }
