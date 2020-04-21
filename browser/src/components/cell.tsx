@@ -37,6 +37,8 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             <span> type: </span>
             <button onClick={() => { onChangeCellType(CellType.MARKDOWN) }}>markdown</button>
             <button onClick={() => { onChangeCellType(CellType.CODE) }}>code</button>
+            <span> output: </span>
+            <button onClick={() => { onClearCellOutput() }}>clear</button>
         </>
     }
 
@@ -46,6 +48,12 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
 
     const onAddCell = () => {
         store.dispatch({ type: 'addCell' })
+    }
+
+    const onClearCellOutput = () => {
+        let newCell = cloneDeep(cellVM.cell)
+        newCell.outputs = []
+        store.dispatch({ type: 'updateCell', payload: newCell })
     }
 
     const onChangeCellType = (type: CellType) => {

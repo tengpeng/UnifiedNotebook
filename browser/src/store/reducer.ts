@@ -27,6 +27,9 @@ export const notebookReducer = (state = initialState, action: IAction) => {
         case 'updateNotebook':
             _.notebookVM.notebook = action.payload.notebook
             return _
+        case 'clearAllOutputs':
+            _.notebookVM.notebook.cells.forEach(cell => cell.cell.outputs = [])
+            return _
         // cell
         case 'addCell':
             _.notebookVM.notebook.cells.push(createEmptyCodeCellVM())
