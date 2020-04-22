@@ -301,7 +301,7 @@ var JupyterKernel = /** @class */ (function (_super) {
         };
     };
     // repl
-    JupyterKernel.prototype.repl = function (payload, codeToExecute) {
+    JupyterKernel.prototype.exposeRepl = function (payload, codeToExecute) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
@@ -313,6 +313,46 @@ var JupyterKernel = /** @class */ (function (_super) {
                                 case 1:
                                     _a.sent();
                                     tempCell = cloneDeep_1.default(payload.cell);
+                                    tempCell.source = codeToExecute;
+                                    this.execute(tempCell, function (output) {
+                                        console.log("JupyterKernel -> constructor -> output", output);
+                                        if (types_1.isExecuteResultOutput(output)) {
+                                            dataString = output.data['text/plain'];
+                                        }
+                                        if (types_1.isStreamOutput(output)) {
+                                            dataString = output.text;
+                                        }
+                                        else {
+                                            dataString = '';
+                                        }
+                                        // get text/plain data from the first output
+                                        console.log("JupyterKernel -> constructor -> dataString", dataString);
+                                        dataString && res(dataString);
+                                    });
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); })];
+            });
+        });
+    };
+    JupyterKernel.prototype.importRepl = function (payload, codeToExecute) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
+                        var tempCell, dataString;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    if (!payload.payload.cellImport) {
+                                        rej(); // ignore
+                                        return [2 /*return*/];
+                                    }
+                                    return [4 /*yield*/, this.switchKernelIfNeeded(payload.payload.cellImport)];
+                                case 1:
+                                    _a.sent();
+                                    tempCell = cloneDeep_1.default(payload.payload.cellImport);
                                     tempCell.source = codeToExecute;
                                     this.execute(tempCell, function (output) {
                                         console.log("JupyterKernel -> constructor -> output", output);
@@ -397,16 +437,34 @@ var JupyterKernel = /** @class */ (function (_super) {
         });
     };
     // expose variable
-    JupyterKernel.prototype.prepareCode = function (payload) {
+    JupyterKernel.prototype.prepareExposeCode = function (payload) {
         var language = payload.cell.language;
         var variable = payload.variable;
         var temp_variable = 'temp_unified_notebook_var';
         var code;
-        if (language === 'python3') {
+        if (['python3', 'python'].includes(language)) {
             code = "\n            import json\n            " + temp_variable + " = json.dumps(" + variable + ")\n            print(" + temp_variable + ")\n            del " + temp_variable + "\n            ";
         }
-        else if (language === 'javascript') {
+        else if (['javascript'].includes(language)) {
             code = "\n            " + temp_variable + " = JSON.stringify(" + variable + ")\n            console.log(global." + temp_variable + ")\n            delete global." + temp_variable;
+        }
+        else {
+            // todo to support other language
+            code = '';
+        }
+        return code;
+    };
+    // import variable
+    JupyterKernel.prototype.prepareImportCode = function (payload, exposedMapValue) {
+        var _a, _b;
+        var language = (_b = (_a = payload.payload.cellImport) === null || _a === void 0 ? void 0 : _a.language) !== null && _b !== void 0 ? _b : '';
+        var variableRename = payload.payload.variableRename;
+        var code;
+        if (['python3', 'python'].includes(language)) {
+            code = "\n            import json\n            " + variableRename + " = (json.loads(\"" + exposedMapValue.jsonData.data.trim() + "\"))\n            print('ok')\n            ";
+        }
+        else if (['javascript'].includes(language)) {
+            code = "\n            " + variableRename + " = JSON.parse('" + exposedMapValue.jsonData.data.trim() + "')\n            console.log('ok')\n            ";
         }
         else {
             // todo to support other language
@@ -420,8 +478,8 @@ var JupyterKernel = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        codeToExecute = this.prepareCode(payload);
-                        return [4 /*yield*/, this.repl(payload, codeToExecute)];
+                        codeToExecute = this.prepareExposeCode(payload);
+                        return [4 /*yield*/, this.exposeRepl(payload, codeToExecute)];
                     case 1:
                         output = _a.sent();
                         exposeOutput = {
@@ -429,6 +487,30 @@ var JupyterKernel = /** @class */ (function (_super) {
                         };
                         console.log("JupyterKernel -> expose -> exposeOutput", exposeOutput);
                         return [2 /*return*/, exposeOutput];
+                }
+            });
+        });
+    };
+    JupyterKernel.prototype.import = function (payload, exposedMapValue) {
+        return __awaiter(this, void 0, void 0, function () {
+            var codeToExecute, output, exposeOutput, flag;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        codeToExecute = this.prepareImportCode(payload, exposedMapValue);
+                        console.log("JupyterKernel -> import -> codeToExecute", codeToExecute);
+                        return [4 /*yield*/, this.importRepl(payload, codeToExecute)];
+                    case 1:
+                        output = _a.sent();
+                        exposeOutput = {
+                            data: output
+                        };
+                        flag = false;
+                        if (exposeOutput.data.trim() === 'ok') {
+                            flag = true;
+                        }
+                        console.log("JupyterKernel -> import -> flag", flag);
+                        return [2 /*return*/, flag];
                 }
             });
         });

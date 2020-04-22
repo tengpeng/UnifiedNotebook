@@ -1,5 +1,5 @@
 import socketClient from 'socket.io-client'
-import { ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposePayload } from 'common/lib/types'
+import { IExposedMapMetaData, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposePayload } from 'common/lib/types'
 import { store } from './store'
 import cloneDeep from 'lodash/cloneDeep'
 
@@ -9,6 +9,8 @@ client.on('cell.run.ok', handleRunCellSuccess)
 client.on('kernel.list.ok', handleGetKernels)
 client.on('kernel.running.list.ok', (res: any) => { console.log(JSON.stringify(res.map((item: any) => item.name))) })
 client.on('expose.variable.ok', handleExposeVariable)
+client.on('expose.variable.list.ok', handleExposeVariableList)
+client.on('expose.variable.import.ok', (res: any) => { console.log(res) })
 client.on('nb.pong', () => console.log('pong'))
 
 // event
@@ -77,6 +79,11 @@ function handleExposeVariable(res: { exposedMapKey: string, jsonData: { data: st
     let newCellVM = cloneDeep(cellVM)
     newCellVM.exposed = res.payload.variable
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
+    client.emit('expose.variable.list')
+}
+function handleExposeVariableList(mapMetadata: IExposedMapMetaData) {
+    console.log("handleExposeVariableList -> mapMetadata", mapMetadata)
+    store.dispatch({ type: 'exposedMapMetaData', payload: mapMetadata })
 }
 
 // store

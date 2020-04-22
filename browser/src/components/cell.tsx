@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs, IExposePayload } from 'common/lib/types.js'
+import React from 'react'
+import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -7,6 +7,7 @@ import { store } from '../store'
 import { IState } from '../store/reducer'
 import { connect } from 'react-redux'
 import client from '../socket'
+import ImportExpose from './importExpose'
 
 interface Props extends IState {
     cellVM: ICellViewModel
@@ -15,7 +16,6 @@ interface Props extends IState {
 }
 
 const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
-    const [exposeVar, setExposeVar] = useState('')
 
     const shouldRenderOutput = () => {
         return Boolean(cellVM.cell.outputs.length) || cellVM.cell.type === CellType.MARKDOWN
@@ -42,23 +42,8 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             <span> output: </span>
             <button onClick={() => { onClearCellOutput() }}>clear</button>
             <br />
-            <span> expose var: </span>
-            <input type="text" value={exposeVar} placeholder="The variable to expose" onKeyDown={(e) => { onExposeSubmit(e) }} onChange={(e) => { onExposeVar(e) }} />
-            <span> exposed var:  </span>
-            {cellVM.exposed}
+            <ImportExpose cellVM={cellVM} />
         </>
-    }
-
-    const onExposeSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.keyCode === 13) {
-            if (cellVM.cell.type !== CellType.CODE) return
-            let payload: IExposePayload = { variable: exposeVar, cell: cellVM.cell }
-            client.emit('expose.variable', payload)
-        }
-    }
-    const onExposeVar = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let val = e.target.value
-        setExposeVar(val)
     }
 
     const renderInput = () => {
@@ -127,6 +112,12 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
         )
     }
 
+    const renderBottomToolbar = () => {
+        return (<>
+            <button onClick={onAddCell}>add</button>
+        </>)
+    }
+
     return (
         <>
             {renderToolbar()}
@@ -134,7 +125,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             {renderInput()}
             <br />
             {shouldRenderOutput() ? renderOutput() : null}
-            <button onClick={onAddCell}>add</button>
+            {renderBottomToolbar()}
         </>
     )
 }

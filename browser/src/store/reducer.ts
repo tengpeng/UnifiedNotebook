@@ -1,6 +1,6 @@
 import { createEmptyCodeCellVM } from '../common'
 import cloneDeep from 'lodash/cloneDeep'
-import { INotebookViewModel, IKernelSpecs, ICellViewModel } from 'common/lib/types'
+import { INotebookViewModel, IKernelSpecs, ICellViewModel, IExposedMapMetaData } from 'common/lib/types'
 
 type IAction = {
     type: string,
@@ -9,6 +9,7 @@ type IAction = {
 export type IState = {
     notebookVM: INotebookViewModel
     kernels: IKernelSpecs
+    exposedMapMetaData: IExposedMapMetaData
 }
 
 const initialState: IState = {
@@ -17,7 +18,8 @@ const initialState: IState = {
             cells: [createEmptyCodeCellVM()]
         }
     },
-    kernels: []
+    kernels: [],
+    exposedMapMetaData: {}
 }
 
 export const notebookReducer = (state = initialState, action: IAction) => {
@@ -51,6 +53,10 @@ export const notebookReducer = (state = initialState, action: IAction) => {
         case 'updateKernels':
             _.kernels = action.payload
             console.log("notebookReducer -> action.payload", action.payload)
+            return _
+        // exposed
+        case 'exposedMapMetaData':
+            _.exposedMapMetaData = action.payload
             return _
         default:
             return state

@@ -5,7 +5,7 @@ import { NotebookSocket } from './socket'
 import { JupyterKernel, IJupyterKernel } from './kernel/jupyter'
 import { ZeppelinKernel } from './kernel/zeppelin'
 import { BackendManager } from './backend'
-import { ICodeCell, IExposeOutput, IExposePayload } from 'common/lib/types'
+import { ICodeCell, IExposedMap, IExposePayload, IExposedMapMetaData, IExposedMapMetaDataValue } from 'common/lib/types'
 
 dotenv.config()
 
@@ -19,9 +19,11 @@ const main = async () => {
     backendManager.register(await new ZeppelinKernel().init())
 
     // exposed variable
-    const exposedMap: {
-        [key: string]: any
-    } = {}
+    let exposedMap: IExposedMap = {}
+    const clearExposeMap = () => {
+        console.log("clearExposeMap -> clearExposeMap")
+        exposedMap = {}
+    }
 
     // socketIO
     let notebookSocket = new NotebookSocket().createSocketServer(app, 80)
@@ -51,15 +53,34 @@ const main = async () => {
             })
             // expose
             socket.on('expose.variable', async (payload: IExposePayload) => {
-                let jsonData = await backendManager.expose(payload)
+                let exposeOutput = await backendManager.expose(payload)
                 let store = {
                     id: payload.cell.id,
                     payload,
-                    jsonData
+                    jsonData: exposeOutput
                 }
                 exposedMap[store.id] = store
-                socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData, payload })
+                socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData: exposeOutput, payload })
             })
+            socket.on('expose.variable.list', async () => {
+                let exposedMapMetaData: IExposedMapMetaData = {}
+                for (const [id, val] of Object.entries(exposedMap)) {
+                    let { payload } = val
+                    exposedMapMetaData[id] = {
+                        id, payload
+                    }
+                }
+                socket.emit('expose.variable.list.ok', exposedMapMetaData)
+            })
+            socket.on('expose.variable.import', async (payload: IExposedMapMetaDataValue) => {
+                let exposedMapValue = exposedMap[payload.id]
+                console.log("main -> exposedMapValue", exposedMapValue)
+                await backendManager.import(payload, exposedMapValue)
+            })
+        })
+
+        notebookSocket.io.on('connect', () => {
+            clearExposeMap()
         })
     }
 

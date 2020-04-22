@@ -48,7 +48,7 @@ var zeppelin_1 = require("./kernel/zeppelin");
 var backend_1 = require("./backend");
 dotenv_1.default.config();
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, backendManager, _a, _b, _c, _d, exposedMap, notebookSocket;
+    var app, port, backendManager, _a, _b, _c, _d, exposedMap, clearExposeMap, notebookSocket;
     return __generator(this, function (_e) {
         switch (_e.label) {
             case 0:
@@ -64,6 +64,10 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
             case 2:
                 _d.apply(_c, [_e.sent()]);
                 exposedMap = {};
+                clearExposeMap = function () {
+                    console.log("clearExposeMap -> clearExposeMap");
+                    exposedMap = {};
+                };
                 notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
                 console.log("main -> notebookSocket");
                 if (notebookSocket.io) {
@@ -114,23 +118,55 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                         }); });
                         // expose
                         socket.on('expose.variable', function (payload) { return __awaiter(void 0, void 0, void 0, function () {
-                            var jsonData, store;
+                            var exposeOutput, store;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0: return [4 /*yield*/, backendManager.expose(payload)];
                                     case 1:
-                                        jsonData = _a.sent();
+                                        exposeOutput = _a.sent();
                                         store = {
                                             id: payload.cell.id,
                                             payload: payload,
-                                            jsonData: jsonData
+                                            jsonData: exposeOutput
                                         };
                                         exposedMap[store.id] = store;
-                                        socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData: jsonData, payload: payload });
+                                        socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData: exposeOutput, payload: payload });
                                         return [2 /*return*/];
                                 }
                             });
                         }); });
+                        socket.on('expose.variable.list', function () { return __awaiter(void 0, void 0, void 0, function () {
+                            var exposedMapMetaData, _i, _a, _b, id, val, payload;
+                            return __generator(this, function (_c) {
+                                exposedMapMetaData = {};
+                                for (_i = 0, _a = Object.entries(exposedMap); _i < _a.length; _i++) {
+                                    _b = _a[_i], id = _b[0], val = _b[1];
+                                    payload = val.payload;
+                                    exposedMapMetaData[id] = {
+                                        id: id, payload: payload
+                                    };
+                                }
+                                socket.emit('expose.variable.list.ok', exposedMapMetaData);
+                                return [2 /*return*/];
+                            });
+                        }); });
+                        socket.on('expose.variable.import', function (payload) { return __awaiter(void 0, void 0, void 0, function () {
+                            var exposedMapValue;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        exposedMapValue = exposedMap[payload.id];
+                                        console.log("main -> exposedMapValue", exposedMapValue);
+                                        return [4 /*yield*/, backendManager.import(payload, exposedMapValue)];
+                                    case 1:
+                                        _a.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); });
+                    });
+                    notebookSocket.io.on('connect', function () {
+                        clearExposeMap();
                     });
                 }
                 // express middleware

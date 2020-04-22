@@ -1,4 +1,4 @@
-import { ICellOutput, ICodeCell, IKernelSpecs, IExposeOutput, IExposePayload } from 'common/lib/types'
+import { IExposedMapValue, IExposedMapMetaDataValue, ICellOutput, ICodeCell, IKernelSpecs, IExposeOutput, IExposePayload } from 'common/lib/types'
 
 // results callback
 export interface ResultsCallback {
@@ -14,6 +14,7 @@ export interface IKernelBase {
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
     expose(payload: IExposePayload): Promise<IExposeOutput>
+    import(payload: IExposedMapMetaDataValue, importJSONData: IExposedMapValue): Promise<boolean>
 }
 
 export class KernelBase implements IKernelBase {
@@ -34,6 +35,9 @@ export class KernelBase implements IKernelBase {
         throw new Error("Method not implemented.");
     }
     expose(payload: IExposePayload): Promise<IExposeOutput> {
+        throw new Error("Method not implemented.");
+    }
+    import(payload: IExposedMapMetaDataValue, importJSONData: IExposedMapValue): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
 }

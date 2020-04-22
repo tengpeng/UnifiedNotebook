@@ -129,6 +129,34 @@ export function exampleCells(): { cells: ICell[] } {
                 state: ICellState.Finished,
             },
             {
+                id: 'acb1335d-b2a5-4d77-81cf-4f4a9c9cad99',
+                type: CellType.CODE,
+                source: "# data transfer example\n\nimport pandas as pd\n\ndf = pd.read_csv('https://gist.githubusercontent.com/rgbkrk/a7984a8788a73e2afb8fd4b89c8ec6de/raw/db8d1db9f878ed448c3cac3eb3c9c0dc5e80891e/2015.csv')\ndataToExpose = df.to_dict()\nprint('lenth: ', len(dataToExpose['Country']), 'firstCountry: ', dataToExpose['Country'][0])\nprint('finish')",
+                language: 'python',
+                backend: 'Jupyter',
+                metadata: {
+                    scrollbar: false,
+                    source_hidden: false,
+                    output_hidden: false
+                },
+                outputs: [],
+                state: ICellState.Finished,
+            },
+            {
+                id: 'eb8ee355-6fcf-47fb-bbaf-b518f87f52b5',
+                type: CellType.CODE,
+                source: "// data transfer example\n\nconsole.log(temp_var)",
+                language: 'javascript',
+                backend: 'Jupyter',
+                metadata: {
+                    scrollbar: false,
+                    source_hidden: false,
+                    output_hidden: false
+                },
+                outputs: [],
+                state: ICellState.Finished,
+            },
+            {
                 id: 'd55c0afd-dfb8-4e49-8139-0336c85484d0',
                 type: CellType.MARKDOWN,
                 source: "#### md math example\n\n$\\sigma_U \\sim \\mathrm{Normal}(0, \\Theta_U^2)$",

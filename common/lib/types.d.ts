@@ -95,8 +95,25 @@ export interface IKernelSpec {
 export declare type IKernelSpecs = IKernelSpec[];
 export interface IExposePayload {
     variable: string;
+    variableRename?: string;
     cell: ICodeCell;
+    cellImport?: ICodeCell;
 }
 export interface IExposeOutput {
     data: string;
+}
+export interface IExposedMap {
+    [key: string]: IExposedMapValue;
+}
+export interface IExposedMapValue {
+    id: string;
+    payload: IExposePayload;
+    jsonData: IExposeOutput;
+}
+export interface IExposedMapMetaData {
+    [key: string]: IExposedMapMetaDataValue;
+}
+export interface IExposedMapMetaDataValue {
+    id: string;
+    payload: IExposePayload;
 }
