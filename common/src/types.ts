@@ -137,27 +137,18 @@ export type IKernelSpecs = IKernelSpec[]
 /* -------------------------------------------------------------------------- */
 /*                                  ExposeVar                                 */
 /* -------------------------------------------------------------------------- */
-export interface IExposePayload {
-    variable: string;
-    variableRename?: string;
-    cell: ICodeCell;
-    cellImport?: ICodeCell;
+export interface IExposeVarPayload {
+    exposeVar: string;
+    exposeCell: ICodeCell;
+    importVarRename?: string;
+    importCell?: ICodeCell;
 }
-export interface IExposeOutput {
-    data: string;
+export type IExposeVarOutput = string;
+export interface IExposedVarMap {
+    [key: string]: IExposedVarMapValue
 }
-export interface IExposedMap {
-    [key: string]: IExposedMapValue
-}
-export interface IExposedMapValue {
+export interface IExposedVarMapValue {
     id: string;
-    payload: IExposePayload;
-    jsonData: IExposeOutput;
-}
-export interface IExposedMapMetaData {
-    [key: string]: IExposedMapMetaDataValue
-}
-export interface IExposedMapMetaDataValue {
-    id: string;
-    payload: IExposePayload;
+    payload: IExposeVarPayload;
+    jsonData?: IExposeVarOutput;
 }

@@ -2,7 +2,7 @@ import { createLogger } from 'bunyan'
 import { KernelMessage, KernelAPI, KernelManager, Kernel, KernelSpecAPI } from "@jupyterlab/services";
 import { ISessionOptions } from '@jupyterlab/services/lib/session/session';
 import { KernelBase, ResultsCallback } from './kernel'
-import { IExposedMapValue, IExposedMapMetaDataValue, IExposeOutput, IExposePayload, IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput } from 'common/lib/types'
+import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue } from 'common/lib/types'
 import { formatStreamText, concatMultilineStringOutput } from '../utils/common'
 import { ISpecModel } from '@jupyterlab/services/lib/kernelspec/restapi';
 import cloneDeep from 'lodash/cloneDeep'
@@ -14,8 +14,8 @@ export interface IJupyterKernel {
     runningKernels(): void
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
-    expose(payload: IExposePayload): Promise<IExposeOutput>
-    import(payload: IExposedMapMetaDataValue, importJSONData: IExposedMapValue): Promise<boolean>
+    exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
+    importVar(payload: IExposedVarMapValue): Promise<boolean>
 }
 
 export class JupyterKernel extends KernelBase implements IJupyterKernel {
@@ -76,7 +76,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         if (currentKernelName !== cellKernelName) {
             await this.switchToKernel(cellKernelName)
             let info = await this.getKernelInfo()
-            console.log("JupyterKernel -> execute -> switchToKernel", info?.language_info.name)
+            log.info('switch to kernel: ', info?.language_info.name)
         }
     }
 
@@ -163,14 +163,13 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
     }
 
     // repl
-    private async exposeRepl(payload: IExposePayload, codeToExecute: string): Promise<string> {
+    private async exposeRepl(exposeVarPayload: IExposeVarPayload, codeToExecute: string): Promise<string> {
         return new Promise(async (res, rej) => {
-            await this.switchKernelIfNeeded(payload.cell)
-            let tempCell = cloneDeep(payload.cell)
+            await this.switchKernelIfNeeded(exposeVarPayload.exposeCell)
+            let tempCell = cloneDeep(exposeVarPayload.exposeCell)
             tempCell.source = codeToExecute
             let dataString: string
             this.execute(tempCell, output => {
-                console.log("JupyterKernel -> constructor -> output", output)
                 if (isExecuteResultOutput(output)) {
                     dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
                 } if (isStreamOutput(output)) {
@@ -179,24 +178,24 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
                     dataString = ''
                 }
                 // get text/plain data from the first output
-                console.log("JupyterKernel -> constructor -> dataString", dataString)
+                log.info("expose repel execute jsonData: ", dataString.length)
                 dataString && res(dataString)
             })
         })
     }
 
-    private async importRepl(payload: IExposedMapMetaDataValue, codeToExecute: string): Promise<string> {
+    private async importRepl(exposedMapValue: IExposedVarMapValue, codeToExecute: string): Promise<string> {
         return new Promise(async (res, rej) => {
-            if (!payload.payload.cellImport) {
+            let { importCell } = exposedMapValue.payload
+            if (!importCell) {
                 rej() // ignore
                 return
             }
-            await this.switchKernelIfNeeded(payload.payload.cellImport)
-            let tempCell = cloneDeep(payload.payload.cellImport)
+            await this.switchKernelIfNeeded(importCell)
+            let tempCell = cloneDeep(importCell)
             tempCell.source = codeToExecute
             let dataString: string
             this.execute(tempCell, output => {
-                console.log("JupyterKernel -> constructor -> output", output)
                 if (isExecuteResultOutput(output)) {
                     dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
                 } if (isStreamOutput(output)) {
@@ -205,7 +204,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
                     dataString = ''
                 }
                 // get text/plain data from the first output
-                console.log("JupyterKernel -> constructor -> dataString", dataString)
+                log.info("import repel execute jsonData: ", dataString.length)
                 dataString && res(dataString)
             })
         })
@@ -213,7 +212,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
 
     // execute
     async execute(cell: ICodeCell, onResults: ResultsCallback) {
-        console.log("JupyterKernel -> execute -> cell")
+        log.info("jupyter execute cell")
         await this.switchKernelIfNeeded(cell)
         const future = this.kernel?.requestExecute({ code: cell.source });
         if (future) {
@@ -249,9 +248,9 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
     }
 
     // expose variable
-    private prepareExposeCode(payload: IExposePayload) {
-        let language = payload.cell.language
-        let variable = payload.variable
+    private prepareExposeCode(exposeVarPayload: IExposeVarPayload) {
+        let language = exposeVarPayload.exposeCell.language
+        let variable = exposeVarPayload.exposeVar
         let temp_variable = 'temp_unified_notebook_var'
         let code
         if (['python3', 'python'].includes(language)) {
@@ -274,19 +273,21 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
     }
 
     // import variable
-    private prepareImportCode(payload: IExposedMapMetaDataValue, exposedMapValue: IExposedMapValue) {
-        let language = payload.payload.cellImport?.language ?? ''
-        let variableRename = payload.payload.variableRename
+    private prepareImportCode(exposedMapValue: IExposedVarMapValue): string {
+        let language = exposedMapValue.payload.importCell?.language
+        let variableRename = exposedMapValue.payload.importVarRename
+        let jsonData = exposedMapValue.jsonData
+        if (!language || !variableRename || !jsonData) return ''
         let code
         if (['python3', 'python'].includes(language)) {
             code = `
             import json
-            ${variableRename} = (json.loads("${exposedMapValue.jsonData.data.trim()}"))
+            ${variableRename} = (json.loads("${jsonData.trim()}"))
             print('ok')
             `
         } else if (['javascript'].includes(language)) {
             code = `
-            ${variableRename} = JSON.parse('${exposedMapValue.jsonData.data.trim()}')
+            ${variableRename} = JSON.parse('${jsonData.trim()}')
             console.log('ok')
             `
         } else {
@@ -296,28 +297,23 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         return code
     }
 
-    async expose(payload: IExposePayload) {
-        let codeToExecute = this.prepareExposeCode(payload)
-        let output = await this.exposeRepl(payload, codeToExecute)
-        let exposeOutput: IExposeOutput = {
-            data: output
-        }
-        console.log("JupyterKernel -> expose -> exposeOutput", exposeOutput)
-        return exposeOutput
+    async exposeVar(exposeVarPayload: IExposeVarPayload) {
+        let codeToExecute = this.prepareExposeCode(exposeVarPayload)
+        let output = await this.exposeRepl(exposeVarPayload, codeToExecute)
+        let exposeVarOutput: IExposeVarOutput = output
+        return exposeVarOutput
     }
 
-    async import(payload: IExposedMapMetaDataValue, exposedMapValue: IExposedMapValue) {
-        let codeToExecute = this.prepareImportCode(payload, exposedMapValue)
-        console.log("JupyterKernel -> import -> codeToExecute", codeToExecute)
-        let output = await this.importRepl(payload, codeToExecute)
-        let exposeOutput: IExposeOutput = {
-            data: output
-        }
+    async importVar(exposedMapValue: IExposedVarMapValue) {
+        let codeToExecute = this.prepareImportCode(exposedMapValue)
+        let output = await this.importRepl(exposedMapValue, codeToExecute).catch(log.error)
+        if (!output) return false
+
         let flag = false
-        if (exposeOutput.data.trim() === 'ok') {
+        if (output.trim() === 'ok') {
             flag = true
         }
-        console.log("JupyterKernel -> import -> flag", flag)
+        log.info("jupyter import variable status: ", flag)
         return flag
     }
 }

@@ -1,13 +1,16 @@
 import { IKernelBase, ResultsCallback } from './kernel/kernel'
-import { IKernelSpecs, ICodeCell, IExposePayload, IExposeOutput, IExposedMapMetaDataValue, IExposedMapValue } from 'common/lib/types'
+import { IKernelSpecs, ICodeCell, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue } from 'common/lib/types'
+import { createLogger } from 'bunyan'
+
+const log = createLogger({ name: 'BackendManager' })
 
 interface IBackendManager {
     kernels(): Promise<IKernelSpecs>
     register(kernel: IKernelBase): void
     getBackend(name: string): IKernelBase
     execute(cell: ICodeCell, onResults: ResultsCallback): void
-    expose(payload: IExposePayload): Promise<IExposeOutput>
-    import(payload: IExposedMapMetaDataValue, importJSONData: IExposedMapValue): Promise<boolean>
+    exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
+    importVar(payload: IExposedVarMapValue): Promise<boolean>
 }
 
 export class BackendManager implements IBackendManager {
@@ -38,12 +41,15 @@ export class BackendManager implements IBackendManager {
     }
 
     // expose variable
-    async expose(payload: IExposePayload) {
-        return this.getBackend(payload.cell.backend).expose(payload)
+    async exposeVar(exposeVarPayload: IExposeVarPayload) {
+        return await this.getBackend(exposeVarPayload.exposeCell.backend).exposeVar(exposeVarPayload)
     }
 
     // import variable
-    async import(payload: IExposedMapMetaDataValue, exposedMapValue: IExposedMapValue) {
-        return this.getBackend(payload.payload.cell.backend).import(payload, exposedMapValue)
+    async importVar(exposedMapValue: IExposedVarMapValue) {
+        log.info("exposedMapValue: ", exposedMapValue)
+        let importCell = exposedMapValue.payload.importCell
+        if (!importCell) return false
+        return await this.getBackend(importCell.backend).importVar(exposedMapValue)
     }
 }

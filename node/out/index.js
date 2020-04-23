@@ -46,9 +46,11 @@ var socket_1 = require("./socket");
 var jupyter_1 = require("./kernel/jupyter");
 var zeppelin_1 = require("./kernel/zeppelin");
 var backend_1 = require("./backend");
+var bunyan_1 = require("bunyan");
+var log = bunyan_1.createLogger({ name: 'Main' });
 dotenv_1.default.config();
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, backendManager, _a, _b, _c, _d, exposedMap, clearExposeMap, notebookSocket;
+    var app, port, backendManager, _a, _b, _c, _d, exposedVarMap, updateExposeMap, createExposedVarMapValue, getExposedVarMapValueWithOutJsonData, clearExposeMap, notebookSocket;
     return __generator(this, function (_e) {
         switch (_e.label) {
             case 0:
@@ -63,15 +65,31 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                 return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
             case 2:
                 _d.apply(_c, [_e.sent()]);
-                exposedMap = {};
+                exposedVarMap = {};
+                updateExposeMap = function (store) {
+                    exposedVarMap[store.id] = store;
+                };
+                createExposedVarMapValue = function (exposeVarOutput, exposeVarPayload) {
+                    var store = {
+                        id: exposeVarPayload.exposeCell.id,
+                        payload: exposeVarPayload,
+                        jsonData: exposeVarOutput
+                    };
+                    updateExposeMap(store);
+                    return store;
+                };
+                getExposedVarMapValueWithOutJsonData = function (exposedVarMapValue) {
+                    var id = exposedVarMapValue.id, payload = exposedVarMapValue.payload;
+                    return { id: id, payload: payload };
+                };
                 clearExposeMap = function () {
-                    console.log("clearExposeMap -> clearExposeMap");
-                    exposedMap = {};
+                    log.info('clear exposeMap cache');
+                    exposedVarMap = {};
                 };
                 notebookSocket = new socket_1.NotebookSocket().createSocketServer(app, 80);
-                console.log("main -> notebookSocket");
                 if (notebookSocket.io) {
                     notebookSocket.io.on('connection', function (socket) {
+                        log.info('socket connection success');
                         socket.emit('socketID', socket.client.id);
                         socket.on('nb.ping', function () {
                             socket.emit('nb.pong');
@@ -117,63 +135,59 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             });
                         }); });
                         // expose
-                        socket.on('expose.variable', function (payload) { return __awaiter(void 0, void 0, void 0, function () {
-                            var exposeOutput, store;
+                        socket.on('expose.variable', function (exposeVarPayload) { return __awaiter(void 0, void 0, void 0, function () {
+                            var exposeVarOutput, exposedVarMapValue;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, backendManager.expose(payload)];
+                                    case 0: return [4 /*yield*/, backendManager.exposeVar(exposeVarPayload)];
                                     case 1:
-                                        exposeOutput = _a.sent();
-                                        store = {
-                                            id: payload.cell.id,
-                                            payload: payload,
-                                            jsonData: exposeOutput
-                                        };
-                                        exposedMap[store.id] = store;
-                                        socket.emit('expose.variable.ok', { exposedMapKey: store.id, jsonData: exposeOutput, payload: payload });
+                                        exposeVarOutput = _a.sent();
+                                        exposedVarMapValue = getExposedVarMapValueWithOutJsonData(createExposedVarMapValue(exposeVarOutput, exposeVarPayload));
+                                        socket.emit('expose.variable.ok', exposedVarMapValue);
                                         return [2 /*return*/];
                                 }
                             });
                         }); });
                         socket.on('expose.variable.list', function () { return __awaiter(void 0, void 0, void 0, function () {
-                            var exposedMapMetaData, _i, _a, _b, id, val, payload;
+                            var _exposedVarMap, _i, _a, _b, id, val;
                             return __generator(this, function (_c) {
-                                exposedMapMetaData = {};
-                                for (_i = 0, _a = Object.entries(exposedMap); _i < _a.length; _i++) {
+                                _exposedVarMap = {};
+                                for (_i = 0, _a = Object.entries(exposedVarMap); _i < _a.length; _i++) {
                                     _b = _a[_i], id = _b[0], val = _b[1];
-                                    payload = val.payload;
-                                    exposedMapMetaData[id] = {
-                                        id: id, payload: payload
-                                    };
+                                    _exposedVarMap[id] = getExposedVarMapValueWithOutJsonData(val);
                                 }
-                                socket.emit('expose.variable.list.ok', exposedMapMetaData);
+                                socket.emit('expose.variable.list.ok', _exposedVarMap);
                                 return [2 /*return*/];
                             });
                         }); });
-                        socket.on('expose.variable.import', function (payload) { return __awaiter(void 0, void 0, void 0, function () {
-                            var exposedMapValue;
+                        socket.on('expose.variable.import', function (exposedVarMapValue) { return __awaiter(void 0, void 0, void 0, function () {
+                            var _exposedVarMapValue, bool;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
-                                        exposedMapValue = exposedMap[payload.id];
-                                        console.log("main -> exposedMapValue", exposedMapValue);
-                                        return [4 /*yield*/, backendManager.import(payload, exposedMapValue)];
+                                        log.info('import variable exposedVarMapValue: ', exposedVarMapValue);
+                                        _exposedVarMapValue = exposedVarMap[exposedVarMapValue.payload.exposeCell.id];
+                                        // merge payload
+                                        _exposedVarMapValue.payload.importCell = exposedVarMapValue.payload.importCell;
+                                        _exposedVarMapValue.payload.importVarRename = exposedVarMapValue.payload.importVarRename;
+                                        return [4 /*yield*/, backendManager.importVar(_exposedVarMapValue)];
                                     case 1:
-                                        _a.sent();
+                                        bool = _a.sent();
+                                        log.info('import variable finish: ', bool);
                                         return [2 /*return*/];
                                 }
                             });
                         }); });
                     });
                     notebookSocket.io.on('connect', function () {
-                        clearExposeMap();
+                        // clearExposeMap()
                     });
                 }
                 // express middleware
                 app.use(cors_1.default());
                 app.use(express_1.default.json());
                 app.listen(port, function () {
-                    console.log("API: http://localhost:" + port);
+                    log.info("API: http://localhost:" + port);
                 });
                 return [2 /*return*/];
         }

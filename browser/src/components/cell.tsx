@@ -106,12 +106,6 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
         store.dispatch({ type: 'updateCellVM', payload: newCellVM })
     }
 
-    const renderOutput = () => {
-        return (
-            <><Output cellVM={cellVM} /></>
-        )
-    }
-
     const renderBottomToolbar = () => {
         return (<>
             <button onClick={onAddCell}>add</button>
@@ -124,7 +118,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             <br />
             {renderInput()}
             <br />
-            {shouldRenderOutput() ? renderOutput() : null}
+            {shouldRenderOutput() ? <Output cellVM={cellVM} /> : null}
             {renderBottomToolbar()}
         </>
     )

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
-import { IExposedMapMetaDataValue, IExposePayload, CellType, ICellViewModel, INotebookViewModel, IKernelSpecs } from 'common/lib/types'
+import { IExposeVarPayload, IExposedVarMapValue, CellType, ICellViewModel, INotebookViewModel, IKernelSpecs } from 'common/lib/types'
 import client from '../socket'
 
 interface Props extends IState {
@@ -10,16 +10,23 @@ interface Props extends IState {
     kernels: IKernelSpecs
 }
 
-const RenderImportExposedVar: React.FC<Props> = ({ cellVM, exposedMapMetaData }) => {
+const createExposeVarPayload = (exposeVar: string, cellVM: ICellViewModel): IExposeVarPayload => {
+    return {
+        exposeVar: exposeVar,
+        exposeCell: cellVM.cell
+    }
+}
+
+const RenderImportExposedVar: React.FC<Props> = ({ cellVM, exposedVarMap }) => {
     const [exposeVar, setExposeVar] = useState('')
-    const [selectedImportVar, setSelectedImportVar] = useState(JSON.stringify({ id: '', variable: '' }))
+    const [selectedImportVar, setSelectedImportVar] = useState(JSON.stringify({}))
     const [variableRename, setVariableRename] = useState('temp_var')
 
     const onExposeSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.keyCode === 13) {
             if (cellVM.cell.type !== CellType.CODE) return
-            let payload: IExposePayload = { variable: exposeVar, cell: cellVM.cell }
-            client.emit('expose.variable', payload)
+            let exposeVarPayload: IExposeVarPayload = createExposeVarPayload(exposeVar, cellVM)
+            client.emit('expose.variable', exposeVarPayload)
         }
     }
 
@@ -29,34 +36,32 @@ const RenderImportExposedVar: React.FC<Props> = ({ cellVM, exposedMapMetaData })
     }
 
     const onImportSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        let { id, payload } = (JSON.parse(selectedImportVar) as IExposedMapMetaDataValue)
+        let exposedVarMapValue = (JSON.parse(selectedImportVar) as IExposedVarMapValue)
         if (e.keyCode === 13) {
             if (cellVM.cell.type !== CellType.CODE) return
             if (!selectedImportVar) return
-            if (id === cellVM.cell.id) return
-            if (!id || !payload.variable) return
-            payload.variableRename = variableRename
-            payload.cellImport = cellVM.cell
-            console.log("onImportSubmit -> onImportSubmit", [id, payload])
-            client.emit('expose.variable.import', { id, payload })
+            if (exposedVarMapValue.id === cellVM.cell.id) return
+            if (!exposedVarMapValue.id || !exposedVarMapValue.payload.exposeVar) return
+            exposedVarMapValue.payload.importVarRename = variableRename
+            exposedVarMapValue.payload.importCell = cellVM.cell
+            console.log("onImportSubmit -> exposedVarMapValue", exposedVarMapValue)
+            client.emit('expose.variable.import', exposedVarMapValue)
         }
     }
 
-    const getExposedMapMetaDataList = (): IExposedMapMetaDataValue[] => {
-        let exposedMapMetaDataList = []
-        for (const [id, value] of Object.entries(exposedMapMetaData)) {
-            let obj = { id, payload: value.payload }
-            exposedMapMetaDataList.push(obj)
+    const getExposedVarMapValueList = (): IExposedVarMapValue[] => {
+        let exposedMapValueList = []
+        for (const val of Object.values(exposedVarMap)) {
+            exposedMapValueList.push(val)
         }
-        return exposedMapMetaDataList
+        return exposedMapValueList
     }
 
-    const shouldRender = () => {
+    const shouldDisableImport = () => {
         // import exposed var from any cell
         let flag = false
-        let exposedMapMetaDataList = getExposedMapMetaDataList()
-        console.log("shouldRender -> exposedMapMetaDataList", exposedMapMetaDataList)
-        if (exposedMapMetaDataList.length) flag = true
+        let exposedVarMapValueList = getExposedVarMapValueList()
+        if (!exposedVarMapValueList.length) flag = true
         return flag
     }
 
@@ -73,25 +78,27 @@ const RenderImportExposedVar: React.FC<Props> = ({ cellVM, exposedMapMetaData })
     }
 
     const renderImport = () => {
+        let disabled = shouldDisableImport()
         return (<>
             {/* import */}
             <div>
                 <span>import var: </span>
-                <select value={selectedImportVar} onChange={(e) => { setSelectedImportVar(e.target.value) }}>
+                <select disabled={disabled} value={selectedImportVar} onChange={(e) => { setSelectedImportVar(e.target.value) }}>
                     <option key="-1" label="The variable to import" value={JSON.stringify({ id: '', payload: {} })}></option>
-                    {getExposedMapMetaDataList().map((item, index) => (
-                        <option key={index} label={`${item.payload.variable}-${item.id}`} value={JSON.stringify(item)}></option>
+                    {getExposedVarMapValueList().map((item, index) => (
+                        <option key={index} label={`${item.payload.exposeVar}-${item.id}`} value={JSON.stringify(item)}></option>
                     ))}
                 </select>
                 <span> as </span>
-                <input type="text" value={variableRename} onChange={(e) => { setVariableRename(e.target.value) }} placeholder="Rename variable" onKeyDown={(e) => { onImportSubmit(e) }} />
+                <input disabled={disabled} type="text" value={variableRename} onChange={(e) => { setVariableRename(e.target.value) }} placeholder="Rename variable" onKeyDown={(e) => { onImportSubmit(e) }} />
             </div>
         </>)
     }
 
     return ((<>
         {renderExpose()}
-        {shouldRender() ? renderImport() : null}</>))
+        {renderImport()}
+    </>))
 }
 
 export default connect((state: IState) => state)(RenderImportExposedVar)

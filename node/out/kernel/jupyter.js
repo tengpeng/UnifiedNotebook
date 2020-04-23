@@ -206,7 +206,7 @@ var JupyterKernel = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.getKernelInfo()];
                     case 3:
                         info = _b.sent();
-                        console.log("JupyterKernel -> execute -> switchToKernel", info === null || info === void 0 ? void 0 : info.language_info.name);
+                        log.info('switch to kernel: ', info === null || info === void 0 ? void 0 : info.language_info.name);
                         _b.label = 4;
                     case 4: return [2 /*return*/];
                 }
@@ -301,7 +301,7 @@ var JupyterKernel = /** @class */ (function (_super) {
         };
     };
     // repl
-    JupyterKernel.prototype.exposeRepl = function (payload, codeToExecute) {
+    JupyterKernel.prototype.exposeRepl = function (exposeVarPayload, codeToExecute) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
@@ -309,13 +309,12 @@ var JupyterKernel = /** @class */ (function (_super) {
                         var tempCell, dataString;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, this.switchKernelIfNeeded(payload.cell)];
+                                case 0: return [4 /*yield*/, this.switchKernelIfNeeded(exposeVarPayload.exposeCell)];
                                 case 1:
                                     _a.sent();
-                                    tempCell = cloneDeep_1.default(payload.cell);
+                                    tempCell = cloneDeep_1.default(exposeVarPayload.exposeCell);
                                     tempCell.source = codeToExecute;
                                     this.execute(tempCell, function (output) {
-                                        console.log("JupyterKernel -> constructor -> output", output);
                                         if (types_1.isExecuteResultOutput(output)) {
                                             dataString = output.data['text/plain'];
                                         }
@@ -326,7 +325,7 @@ var JupyterKernel = /** @class */ (function (_super) {
                                             dataString = '';
                                         }
                                         // get text/plain data from the first output
-                                        console.log("JupyterKernel -> constructor -> dataString", dataString);
+                                        log.info("expose repel execute jsonData: ", dataString.length);
                                         dataString && res(dataString);
                                     });
                                     return [2 /*return*/];
@@ -336,26 +335,26 @@ var JupyterKernel = /** @class */ (function (_super) {
             });
         });
     };
-    JupyterKernel.prototype.importRepl = function (payload, codeToExecute) {
+    JupyterKernel.prototype.importRepl = function (exposedMapValue, codeToExecute) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
-                        var tempCell, dataString;
+                        var importCell, tempCell, dataString;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    if (!payload.payload.cellImport) {
+                                    importCell = exposedMapValue.payload.importCell;
+                                    if (!importCell) {
                                         rej(); // ignore
                                         return [2 /*return*/];
                                     }
-                                    return [4 /*yield*/, this.switchKernelIfNeeded(payload.payload.cellImport)];
+                                    return [4 /*yield*/, this.switchKernelIfNeeded(importCell)];
                                 case 1:
                                     _a.sent();
-                                    tempCell = cloneDeep_1.default(payload.payload.cellImport);
+                                    tempCell = cloneDeep_1.default(importCell);
                                     tempCell.source = codeToExecute;
                                     this.execute(tempCell, function (output) {
-                                        console.log("JupyterKernel -> constructor -> output", output);
                                         if (types_1.isExecuteResultOutput(output)) {
                                             dataString = output.data['text/plain'];
                                         }
@@ -366,7 +365,7 @@ var JupyterKernel = /** @class */ (function (_super) {
                                             dataString = '';
                                         }
                                         // get text/plain data from the first output
-                                        console.log("JupyterKernel -> constructor -> dataString", dataString);
+                                        log.info("import repel execute jsonData: ", dataString.length);
                                         dataString && res(dataString);
                                     });
                                     return [2 /*return*/];
@@ -385,7 +384,7 @@ var JupyterKernel = /** @class */ (function (_super) {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        console.log("JupyterKernel -> execute -> cell");
+                        log.info("jupyter execute cell");
                         return [4 /*yield*/, this.switchKernelIfNeeded(cell)];
                     case 1:
                         _b.sent();
@@ -437,9 +436,9 @@ var JupyterKernel = /** @class */ (function (_super) {
         });
     };
     // expose variable
-    JupyterKernel.prototype.prepareExposeCode = function (payload) {
-        var language = payload.cell.language;
-        var variable = payload.variable;
+    JupyterKernel.prototype.prepareExposeCode = function (exposeVarPayload) {
+        var language = exposeVarPayload.exposeCell.language;
+        var variable = exposeVarPayload.exposeVar;
         var temp_variable = 'temp_unified_notebook_var';
         var code;
         if (['python3', 'python'].includes(language)) {
@@ -455,16 +454,19 @@ var JupyterKernel = /** @class */ (function (_super) {
         return code;
     };
     // import variable
-    JupyterKernel.prototype.prepareImportCode = function (payload, exposedMapValue) {
-        var _a, _b;
-        var language = (_b = (_a = payload.payload.cellImport) === null || _a === void 0 ? void 0 : _a.language) !== null && _b !== void 0 ? _b : '';
-        var variableRename = payload.payload.variableRename;
+    JupyterKernel.prototype.prepareImportCode = function (exposedMapValue) {
+        var _a;
+        var language = (_a = exposedMapValue.payload.importCell) === null || _a === void 0 ? void 0 : _a.language;
+        var variableRename = exposedMapValue.payload.importVarRename;
+        var jsonData = exposedMapValue.jsonData;
+        if (!language || !variableRename || !jsonData)
+            return '';
         var code;
         if (['python3', 'python'].includes(language)) {
-            code = "\n            import json\n            " + variableRename + " = (json.loads(\"" + exposedMapValue.jsonData.data.trim() + "\"))\n            print('ok')\n            ";
+            code = "\n            import json\n            " + variableRename + " = (json.loads(\"" + jsonData.trim() + "\"))\n            print('ok')\n            ";
         }
         else if (['javascript'].includes(language)) {
-            code = "\n            " + variableRename + " = JSON.parse('" + exposedMapValue.jsonData.data.trim() + "')\n            console.log('ok')\n            ";
+            code = "\n            " + variableRename + " = JSON.parse('" + jsonData.trim() + "')\n            console.log('ok')\n            ";
         }
         else {
             // todo to support other language
@@ -472,44 +474,39 @@ var JupyterKernel = /** @class */ (function (_super) {
         }
         return code;
     };
-    JupyterKernel.prototype.expose = function (payload) {
+    JupyterKernel.prototype.exposeVar = function (exposeVarPayload) {
         return __awaiter(this, void 0, void 0, function () {
-            var codeToExecute, output, exposeOutput;
+            var codeToExecute, output, exposeVarOutput;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        codeToExecute = this.prepareExposeCode(payload);
-                        return [4 /*yield*/, this.exposeRepl(payload, codeToExecute)];
+                        codeToExecute = this.prepareExposeCode(exposeVarPayload);
+                        return [4 /*yield*/, this.exposeRepl(exposeVarPayload, codeToExecute)];
                     case 1:
                         output = _a.sent();
-                        exposeOutput = {
-                            data: output
-                        };
-                        console.log("JupyterKernel -> expose -> exposeOutput", exposeOutput);
-                        return [2 /*return*/, exposeOutput];
+                        exposeVarOutput = output;
+                        return [2 /*return*/, exposeVarOutput];
                 }
             });
         });
     };
-    JupyterKernel.prototype.import = function (payload, exposedMapValue) {
+    JupyterKernel.prototype.importVar = function (exposedMapValue) {
         return __awaiter(this, void 0, void 0, function () {
-            var codeToExecute, output, exposeOutput, flag;
+            var codeToExecute, output, flag;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        codeToExecute = this.prepareImportCode(payload, exposedMapValue);
-                        console.log("JupyterKernel -> import -> codeToExecute", codeToExecute);
-                        return [4 /*yield*/, this.importRepl(payload, codeToExecute)];
+                        codeToExecute = this.prepareImportCode(exposedMapValue);
+                        return [4 /*yield*/, this.importRepl(exposedMapValue, codeToExecute).catch(log.error)];
                     case 1:
                         output = _a.sent();
-                        exposeOutput = {
-                            data: output
-                        };
+                        if (!output)
+                            return [2 /*return*/, false];
                         flag = false;
-                        if (exposeOutput.data.trim() === 'ok') {
+                        if (output.trim() === 'ok') {
                             flag = true;
                         }
-                        console.log("JupyterKernel -> import -> flag", flag);
+                        log.info("jupyter import variable status: ", flag);
                         return [2 /*return*/, flag];
                 }
             });

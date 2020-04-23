@@ -1,6 +1,24 @@
+import { ICell } from 'common/lib/types'
 import { ICellState, ICodeCell, ICellViewModel, CellType } from 'common/lib/types'
 import { v4 as uuid } from 'uuid'
+import { store } from './index'
+import cloneDeep from 'lodash/cloneDeep'
 
+/* -------------------------------------------------------------------------- */
+/*                                   cellVM                                   */
+/* -------------------------------------------------------------------------- */
+export const getCurrentCellVM = (cell: ICell) => {
+    let state = store.getState()
+    let currentCells = state.notebookVM.notebook.cells
+    let index = currentCells.findIndex(item => item.cell.id === cell.id)
+    return currentCells[index]
+}
+
+export const cloneCurrentCellVM = (cell: ICell) => {
+    return cloneDeep(getCurrentCellVM(cell))
+}
+
+// create cell
 export const createEmptyCodeCell = (id?: string): ICodeCell => {
     let emptyCell = {
         id: id ?? uuid(),

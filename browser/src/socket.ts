@@ -1,7 +1,7 @@
 import socketClient from 'socket.io-client'
-import { IExposedMapMetaData, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposePayload } from 'common/lib/types'
+import { IExposedVarMapValue, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposedVarMap } from 'common/lib/types'
 import { store } from './store'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneCurrentCellVM } from './store/utils'
 
 let client = socketClient('http://localhost:80', { reconnection: true })
 client.on('socketID', handleSocketID)
@@ -18,6 +18,7 @@ client.on('nb.pong', () => console.log('pong'))
 function handleSocketID(id: string) {
     console.log("handleSocketID -> id", id)
 }
+
 function handleRunCellSuccess(res: IResponse) {
     console.log("handleRunCellSuccess -> res", res)
     let msg: ICellOutput = res.msg
@@ -36,33 +37,33 @@ function handleRunCellSuccess(res: IResponse) {
         console.warn(`Unknown message ${msg.type} : called by cell ${cell.id}`);
     }
 }
+
 function handleExecuteResult(msg: IExecuteResultOutput, cell: ICell) {
-    let cellVM = getCurrentCellVM(cell)
-    let newCellVM = cloneDeep(cellVM)
+    let newCellVM = cloneCurrentCellVM(cell)
     newCellVM.cell.outputs = [msg]
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
 }
+
 function handleStatusOutput(msg: IStatusOutput, cell: ICell) {
-    let cellVM = getCurrentCellVM(cell)
-    let newCellVM = cloneDeep(cellVM)
+    let newCellVM = cloneCurrentCellVM(cell)
     newCellVM.cell.state = msg.state
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
 }
+
 function handleStreamOutput(msg: IStreamOutput, cell: ICell) {
-    let cellVM = getCurrentCellVM(cell)
-    let newCellVM = cloneDeep(cellVM)
+    let newCellVM = cloneCurrentCellVM(cell)
     newCellVM.cell.outputs.push(msg)
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
 }
+
 function handleErrorOutput(msg: IErrorOutput, cell: ICell) {
-    let cellVM = getCurrentCellVM(cell)
-    let newCellVM = cloneDeep(cellVM)
+    let newCellVM = cloneCurrentCellVM(cell)
     newCellVM.cell.outputs.push(msg)
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
 }
+
 function handleClearOutput(msg: IClearOutput, cell: ICell) {
-    let cellVM = getCurrentCellVM(cell)
-    let newCellVM = cloneDeep(cellVM)
+    let newCellVM = cloneCurrentCellVM(cell)
     newCellVM.cell.outputs = []
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
 }
@@ -73,25 +74,16 @@ function handleGetKernels(msg: IKernelSpecs) {
 }
 
 // expose
-function handleExposeVariable(res: { exposedMapKey: string, jsonData: { data: string }, payload: IExposePayload }) {
-    console.log("handleExposeVariable -> payload", res.payload)
-    let cellVM = getCurrentCellVM(res.payload.cell)
-    let newCellVM = cloneDeep(cellVM)
-    newCellVM.exposed = res.payload.variable
+function handleExposeVariable(exposedVarMapValue: IExposedVarMapValue) {
+    console.log("handleExposeVariable -> exposedVarMapValue", exposedVarMapValue)
+    let newCellVM = cloneCurrentCellVM(exposedVarMapValue.payload.exposeCell)
+    newCellVM.exposed = exposedVarMapValue.payload.exposeVar
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
     client.emit('expose.variable.list')
 }
-function handleExposeVariableList(mapMetadata: IExposedMapMetaData) {
-    console.log("handleExposeVariableList -> mapMetadata", mapMetadata)
-    store.dispatch({ type: 'exposedMapMetaData', payload: mapMetadata })
-}
-
-// store
-function getCurrentCellVM(cell: ICell) {
-    let state = store.getState()
-    let currentCells = state.notebookVM.notebook.cells
-    let index = currentCells.findIndex(item => item.cell.id === cell.id)
-    return currentCells[index]
+function handleExposeVariableList(exposedVarMap: IExposedVarMap) {
+    console.log("handleExposeVariableList -> exposedVarMap", exposedVarMap)
+    store.dispatch({ type: 'uploadExposedVarMap', payload: exposedVarMap })
 }
 
 export default client
