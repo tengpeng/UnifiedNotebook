@@ -18,7 +18,7 @@ class NodeApp(ProcessApp):
         with open(osp.join(HERE, 'config.json'), 'w') as fid:
             json.dump(config, fid)
 
-        cmd = [which('nodemon'), '-w', './out', '--exec', which('node'), './out/index.js', '--jupyter-config-data=./config.json']
+        cmd = [which('nodemon'), '-w', './out', '--exec', which('node'), './out/index.js', '--inspect', '--jupyter-config-data=./config.json', '|', './node_modules/.bin/bunyan']
         # cmd = [which('node'),
         #        'index.js', '--jupyter-config-data=./config.json']
         return cmd, dict(cwd=HERE)
