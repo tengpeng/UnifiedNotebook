@@ -2,7 +2,7 @@ import { createLogger } from 'bunyan'
 import { KernelMessage, KernelAPI, KernelManager, Kernel, KernelSpecAPI } from "@jupyterlab/services";
 import { ISessionOptions } from '@jupyterlab/services/lib/session/session';
 import { KernelBase, ResultsCallback } from './kernel'
-import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue } from 'common/lib/types'
+import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue, isErrorOutput } from 'common/lib/types'
 import { formatStreamText, concatMultilineStringOutput } from '../utils/common'
 import { ISpecModel } from '@jupyterlab/services/lib/kernelspec/restapi';
 import cloneDeep from 'lodash/cloneDeep'
@@ -165,21 +165,27 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
     // repl
     private async exposeRepl(exposeVarPayload: IExposeVarPayload, codeToExecute: string): Promise<string> {
         return new Promise(async (res, rej) => {
-            await this.switchKernelIfNeeded(exposeVarPayload.exposeCell)
             let tempCell = cloneDeep(exposeVarPayload.exposeCell)
             tempCell.source = codeToExecute
             let dataString: string
-            this.execute(tempCell, output => {
-                if (isExecuteResultOutput(output)) {
-                    dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
-                } if (isStreamOutput(output)) {
-                    dataString = (output as IStreamOutput).text
-                } else {
-                    dataString = ''
-                }
+            let handleSuccess = (dataString: string) => {
                 // get text/plain data from the first output
                 log.info("expose repel execute jsonData: ", dataString.length)
                 dataString && res(dataString)
+            }
+            await this.execute(tempCell, output => {
+                if (isExecuteResultOutput(output)) {
+                    dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
+                    handleSuccess(dataString)
+                }
+                if (isStreamOutput(output)) {
+                    dataString = (output as IStreamOutput).text
+                    handleSuccess(dataString)
+                }
+                if (isErrorOutput(output)) {
+                    log.info('expose repl get error output')
+                    rej(output)
+                }
             })
         })
     }
@@ -191,21 +197,27 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
                 rej() // ignore
                 return
             }
-            await this.switchKernelIfNeeded(importCell)
             let tempCell = cloneDeep(importCell)
             tempCell.source = codeToExecute
             let dataString: string
-            this.execute(tempCell, output => {
-                if (isExecuteResultOutput(output)) {
-                    dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
-                } if (isStreamOutput(output)) {
-                    dataString = (output as IStreamOutput).text
-                } else {
-                    dataString = ''
-                }
+            let handleSuccess = (dataString: string) => {
                 // get text/plain data from the first output
                 log.info("import repel execute jsonData: ", dataString.length)
                 dataString && res(dataString)
+            }
+            await this.execute(tempCell, output => {
+                if (isExecuteResultOutput(output)) {
+                    dataString = ((output as IExecuteResultOutput).data as any)['text/plain']
+                    handleSuccess(dataString)
+                }
+                if (isStreamOutput(output)) {
+                    dataString = (output as IStreamOutput).text
+                    handleSuccess(dataString)
+                }
+                if (isErrorOutput(output)) {
+                    log.info('import repl get error output')
+                    rej(output)
+                }
             })
         })
     }
@@ -255,16 +267,16 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         let code
         if (['python3', 'python'].includes(language)) {
             code = `
-            import json
-            ${temp_variable} = json.dumps(${variable})
-            print(${temp_variable})
-            del ${temp_variable}
-            `
+import json
+${temp_variable} = json.dumps(${variable})
+print(${temp_variable})
+del ${temp_variable}
+`
         } else if (['javascript'].includes(language)) {
             code = `
-            ${temp_variable} = JSON.stringify(${variable})
-            console.log(global.${temp_variable})
-            delete global.${temp_variable}`
+${temp_variable} = JSON.stringify(${variable})
+console.log(global.${temp_variable})
+delete global.${temp_variable}`
         } else {
             // todo to support other language
             code = ''
@@ -281,15 +293,15 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         let code
         if (['python3', 'python'].includes(language)) {
             code = `
-            import json
-            ${variableRename} = (json.loads("${jsonData.trim()}"))
-            print('ok')
+import json
+${variableRename} = (json.loads("${jsonData.trim()}"))
+print('ok')
             `
         } else if (['javascript'].includes(language)) {
             code = `
-            ${variableRename} = JSON.parse('${jsonData.trim()}')
-            console.log('ok')
-            `
+${variableRename} = JSON.parse('${jsonData.trim()}')
+console.log('ok')
+`
         } else {
             // todo to support other language
             code = ''

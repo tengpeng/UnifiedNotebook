@@ -35,9 +35,9 @@ export class BackendManager implements IBackendManager {
         return this.backends[name]
     }
 
-    execute(cell: ICodeCell, onResults: ResultsCallback) {
+    async execute(cell: ICodeCell, onResults: ResultsCallback) {
         let backend = this.getBackend(cell.backend)
-        backend.execute(cell, onResults)
+        await backend.execute(cell, onResults)
     }
 
     // expose variable

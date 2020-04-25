@@ -10,7 +10,7 @@ client.on('kernel.list.ok', handleGetKernels)
 client.on('kernel.running.list.ok', (res: any) => { console.log(JSON.stringify(res.map((item: any) => item.name))) })
 client.on('expose.variable.ok', handleExposeVariable)
 client.on('expose.variable.list.ok', handleExposeVariableList)
-client.on('expose.variable.import.ok', (res: any) => { console.log(res) })
+client.on('expose.variable.import.ok', (res: any) => { console.log('import variable: ', res) })
 client.on('nb.pong', () => console.log('pong'))
 
 // event

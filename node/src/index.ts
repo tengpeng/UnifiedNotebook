@@ -19,7 +19,7 @@ const main = async () => {
     // init zeppelin and jupyter
     const backendManager = new BackendManager()
     backendManager.register(await new JupyterKernel().init())
-    backendManager.register(await new ZeppelinKernel().init())
+    // backendManager.register(await new ZeppelinKernel().init())
 
     // exposed variable
     let exposedVarMap: IExposedVarMap = {}
@@ -66,15 +66,23 @@ const main = async () => {
             })
             // run code
             socket.on('cell.run', async (cell: ICodeCell) => {
-                await backendManager.execute(cell, msg => {
-                    socket.emit('cell.run.ok', { msg, cell })
-                })
+                try {
+                    await backendManager.execute(cell, msg => {
+                        socket.emit('cell.run.ok', { msg, cell })
+                    })
+                } catch (error) {
+                    log.error(error)
+                }
             })
             // expose
             socket.on('expose.variable', async (exposeVarPayload: IExposeVarPayload) => {
-                let exposeVarOutput = await backendManager.exposeVar(exposeVarPayload)
-                let exposedVarMapValue = getExposedVarMapValueWithOutJsonData(createExposedVarMapValue(exposeVarOutput, exposeVarPayload))
-                socket.emit('expose.variable.ok', exposedVarMapValue)
+                try {
+                    let exposeVarOutput = await backendManager.exposeVar(exposeVarPayload)
+                    let exposedVarMapValue = getExposedVarMapValueWithOutJsonData(createExposedVarMapValue(exposeVarOutput, exposeVarPayload))
+                    socket.emit('expose.variable.ok', exposedVarMapValue)
+                } catch (error) {
+                    log.error(error)
+                }
             })
             socket.on('expose.variable.list', async () => {
                 let _exposedVarMap: IExposedVarMap = {}
@@ -84,13 +92,18 @@ const main = async () => {
                 socket.emit('expose.variable.list.ok', _exposedVarMap)
             })
             socket.on('expose.variable.import', async (exposedVarMapValue: IExposedVarMapValue) => {
-                log.info('import variable exposedVarMapValue: ', exposedVarMapValue)
-                let _exposedVarMapValue: IExposedVarMapValue = exposedVarMap[exposedVarMapValue.payload.exposeCell.id]
-                // merge payload
-                _exposedVarMapValue.payload.importCell = exposedVarMapValue.payload.importCell
-                _exposedVarMapValue.payload.importVarRename = exposedVarMapValue.payload.importVarRename
-                let bool = await backendManager.importVar(_exposedVarMapValue)
-                log.info('import variable finish: ', bool)
+                try {
+                    log.info('import variable exposedVarMapValue')
+                    let _exposedVarMapValue: IExposedVarMapValue = exposedVarMap[exposedVarMapValue.payload.exposeCell.id]
+                    // merge payload
+                    _exposedVarMapValue.payload.importCell = exposedVarMapValue.payload.importCell
+                    _exposedVarMapValue.payload.importVarRename = exposedVarMapValue.payload.importVarRename
+                    let bool = await backendManager.importVar(_exposedVarMapValue)
+                    log.info('import variable finish: ', bool)
+                    socket.emit('expose.variable.import.ok', bool)
+                } catch (error) {
+                    log.error(error)
+                }
             })
         })
 

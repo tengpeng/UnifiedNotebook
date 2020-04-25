@@ -306,28 +306,33 @@ var JupyterKernel = /** @class */ (function (_super) {
             var _this = this;
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
-                        var tempCell, dataString;
+                        var tempCell, dataString, handleSuccess;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, this.switchKernelIfNeeded(exposeVarPayload.exposeCell)];
-                                case 1:
-                                    _a.sent();
+                                case 0:
                                     tempCell = cloneDeep_1.default(exposeVarPayload.exposeCell);
                                     tempCell.source = codeToExecute;
-                                    this.execute(tempCell, function (output) {
-                                        if (types_1.isExecuteResultOutput(output)) {
-                                            dataString = output.data['text/plain'];
-                                        }
-                                        if (types_1.isStreamOutput(output)) {
-                                            dataString = output.text;
-                                        }
-                                        else {
-                                            dataString = '';
-                                        }
+                                    handleSuccess = function (dataString) {
                                         // get text/plain data from the first output
                                         log.info("expose repel execute jsonData: ", dataString.length);
                                         dataString && res(dataString);
-                                    });
+                                    };
+                                    return [4 /*yield*/, this.execute(tempCell, function (output) {
+                                            if (types_1.isExecuteResultOutput(output)) {
+                                                dataString = output.data['text/plain'];
+                                                handleSuccess(dataString);
+                                            }
+                                            if (types_1.isStreamOutput(output)) {
+                                                dataString = output.text;
+                                                handleSuccess(dataString);
+                                            }
+                                            if (types_1.isErrorOutput(output)) {
+                                                log.info('expose repl get error output');
+                                                rej(output);
+                                            }
+                                        })];
+                                case 1:
+                                    _a.sent();
                                     return [2 /*return*/];
                             }
                         });
@@ -340,7 +345,7 @@ var JupyterKernel = /** @class */ (function (_super) {
             var _this = this;
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
-                        var importCell, tempCell, dataString;
+                        var importCell, tempCell, dataString, handleSuccess;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
@@ -349,25 +354,29 @@ var JupyterKernel = /** @class */ (function (_super) {
                                         rej(); // ignore
                                         return [2 /*return*/];
                                     }
-                                    return [4 /*yield*/, this.switchKernelIfNeeded(importCell)];
-                                case 1:
-                                    _a.sent();
                                     tempCell = cloneDeep_1.default(importCell);
                                     tempCell.source = codeToExecute;
-                                    this.execute(tempCell, function (output) {
-                                        if (types_1.isExecuteResultOutput(output)) {
-                                            dataString = output.data['text/plain'];
-                                        }
-                                        if (types_1.isStreamOutput(output)) {
-                                            dataString = output.text;
-                                        }
-                                        else {
-                                            dataString = '';
-                                        }
+                                    handleSuccess = function (dataString) {
                                         // get text/plain data from the first output
                                         log.info("import repel execute jsonData: ", dataString.length);
                                         dataString && res(dataString);
-                                    });
+                                    };
+                                    return [4 /*yield*/, this.execute(tempCell, function (output) {
+                                            if (types_1.isExecuteResultOutput(output)) {
+                                                dataString = output.data['text/plain'];
+                                                handleSuccess(dataString);
+                                            }
+                                            if (types_1.isStreamOutput(output)) {
+                                                dataString = output.text;
+                                                handleSuccess(dataString);
+                                            }
+                                            if (types_1.isErrorOutput(output)) {
+                                                log.info('import repl get error output');
+                                                rej(output);
+                                            }
+                                        })];
+                                case 1:
+                                    _a.sent();
                                     return [2 /*return*/];
                             }
                         });
@@ -442,10 +451,10 @@ var JupyterKernel = /** @class */ (function (_super) {
         var temp_variable = 'temp_unified_notebook_var';
         var code;
         if (['python3', 'python'].includes(language)) {
-            code = "\n            import json\n            " + temp_variable + " = json.dumps(" + variable + ")\n            print(" + temp_variable + ")\n            del " + temp_variable + "\n            ";
+            code = "\nimport json\n" + temp_variable + " = json.dumps(" + variable + ")\nprint(" + temp_variable + ")\ndel " + temp_variable + "\n";
         }
         else if (['javascript'].includes(language)) {
-            code = "\n            " + temp_variable + " = JSON.stringify(" + variable + ")\n            console.log(global." + temp_variable + ")\n            delete global." + temp_variable;
+            code = "\n" + temp_variable + " = JSON.stringify(" + variable + ")\nconsole.log(global." + temp_variable + ")\ndelete global." + temp_variable;
         }
         else {
             // todo to support other language
@@ -463,10 +472,10 @@ var JupyterKernel = /** @class */ (function (_super) {
             return '';
         var code;
         if (['python3', 'python'].includes(language)) {
-            code = "\n            import json\n            " + variableRename + " = (json.loads(\"" + jsonData.trim() + "\"))\n            print('ok')\n            ";
+            code = "\nimport json\n" + variableRename + " = (json.loads(\"" + jsonData.trim() + "\"))\nprint('ok')\n            ";
         }
         else if (['javascript'].includes(language)) {
-            code = "\n            " + variableRename + " = JSON.parse('" + jsonData.trim() + "')\n            console.log('ok')\n            ";
+            code = "\n" + variableRename + " = JSON.parse('" + jsonData.trim() + "')\nconsole.log('ok')\n";
         }
         else {
             // todo to support other language

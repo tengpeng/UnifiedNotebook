@@ -44,15 +44,14 @@ var cors_1 = __importDefault(require("cors"));
 var dotenv_1 = __importDefault(require("dotenv"));
 var socket_1 = require("./socket");
 var jupyter_1 = require("./kernel/jupyter");
-var zeppelin_1 = require("./kernel/zeppelin");
 var backend_1 = require("./backend");
 var bunyan_1 = require("bunyan");
 var log = bunyan_1.createLogger({ name: 'Main' });
 dotenv_1.default.config();
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, backendManager, _a, _b, _c, _d, exposedVarMap, updateExposeMap, createExposedVarMapValue, getExposedVarMapValueWithOutJsonData, clearExposeMap, notebookSocket;
-    return __generator(this, function (_e) {
-        switch (_e.label) {
+    var app, port, backendManager, _a, _b, exposedVarMap, updateExposeMap, createExposedVarMapValue, getExposedVarMapValueWithOutJsonData, clearExposeMap, notebookSocket;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 app = express_1.default();
                 port = process.env.EXPRESS_PORT;
@@ -60,11 +59,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _b = (_a = backendManager).register;
                 return [4 /*yield*/, new jupyter_1.JupyterKernel().init()];
             case 1:
-                _b.apply(_a, [_e.sent()]);
-                _d = (_c = backendManager).register;
-                return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
-            case 2:
-                _d.apply(_c, [_e.sent()]);
+                _b.apply(_a, [_c.sent()]);
                 exposedVarMap = {};
                 updateExposeMap = function (store) {
                     exposedVarMap[store.id] = store;
@@ -123,28 +118,43 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                         }); });
                         // run code
                         socket.on('cell.run', function (cell) { return __awaiter(void 0, void 0, void 0, function () {
+                            var error_1;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, backendManager.execute(cell, function (msg) {
-                                            socket.emit('cell.run.ok', { msg: msg, cell: cell });
-                                        })];
+                                    case 0:
+                                        _a.trys.push([0, 2, , 3]);
+                                        return [4 /*yield*/, backendManager.execute(cell, function (msg) {
+                                                socket.emit('cell.run.ok', { msg: msg, cell: cell });
+                                            })];
                                     case 1:
                                         _a.sent();
-                                        return [2 /*return*/];
+                                        return [3 /*break*/, 3];
+                                    case 2:
+                                        error_1 = _a.sent();
+                                        log.error(error_1);
+                                        return [3 /*break*/, 3];
+                                    case 3: return [2 /*return*/];
                                 }
                             });
                         }); });
                         // expose
                         socket.on('expose.variable', function (exposeVarPayload) { return __awaiter(void 0, void 0, void 0, function () {
-                            var exposeVarOutput, exposedVarMapValue;
+                            var exposeVarOutput, exposedVarMapValue, error_2;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, backendManager.exposeVar(exposeVarPayload)];
+                                    case 0:
+                                        _a.trys.push([0, 2, , 3]);
+                                        return [4 /*yield*/, backendManager.exposeVar(exposeVarPayload)];
                                     case 1:
                                         exposeVarOutput = _a.sent();
                                         exposedVarMapValue = getExposedVarMapValueWithOutJsonData(createExposedVarMapValue(exposeVarOutput, exposeVarPayload));
                                         socket.emit('expose.variable.ok', exposedVarMapValue);
-                                        return [2 /*return*/];
+                                        return [3 /*break*/, 3];
+                                    case 2:
+                                        error_2 = _a.sent();
+                                        log.error(error_2);
+                                        return [3 /*break*/, 3];
+                                    case 3: return [2 /*return*/];
                                 }
                             });
                         }); });
@@ -161,11 +171,12 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             });
                         }); });
                         socket.on('expose.variable.import', function (exposedVarMapValue) { return __awaiter(void 0, void 0, void 0, function () {
-                            var _exposedVarMapValue, bool;
+                            var _exposedVarMapValue, bool, error_3;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
-                                        log.info('import variable exposedVarMapValue: ', exposedVarMapValue);
+                                        _a.trys.push([0, 2, , 3]);
+                                        log.info('import variable exposedVarMapValue');
                                         _exposedVarMapValue = exposedVarMap[exposedVarMapValue.payload.exposeCell.id];
                                         // merge payload
                                         _exposedVarMapValue.payload.importCell = exposedVarMapValue.payload.importCell;
@@ -174,7 +185,13 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                     case 1:
                                         bool = _a.sent();
                                         log.info('import variable finish: ', bool);
-                                        return [2 /*return*/];
+                                        socket.emit('expose.variable.import.ok', bool);
+                                        return [3 /*break*/, 3];
+                                    case 2:
+                                        error_3 = _a.sent();
+                                        log.error(error_3);
+                                        return [3 /*break*/, 3];
+                                    case 3: return [2 /*return*/];
                                 }
                             });
                         }); });
