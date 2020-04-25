@@ -13,6 +13,7 @@ export interface IKernelBase {
     runningKernels(): void
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
+    interrupt(cell: ICodeCell): void
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
     importVar(payload: IExposedVarMapValue): Promise<boolean>
 }
@@ -32,6 +33,9 @@ export class KernelBase implements IKernelBase {
         throw new Error("Method not implemented.");
     }
     execute(cell: ICodeCell, onResults: ResultsCallback): void {
+        throw new Error("Method not implemented.");
+    }
+    interrupt(cell: ICodeCell): void {
         throw new Error("Method not implemented.");
     }
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput> {

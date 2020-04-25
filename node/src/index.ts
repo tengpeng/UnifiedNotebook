@@ -74,6 +74,13 @@ const main = async () => {
                     log.error(error)
                 }
             })
+            socket.on('cell.interrupt', async (cell: ICodeCell) => {
+                try {
+                    await backendManager.interrupt(cell)
+                } catch (error) {
+                    log.error(error)
+                }
+            })
             // expose
             socket.on('expose.variable', async (exposeVarPayload: IExposeVarPayload) => {
                 try {

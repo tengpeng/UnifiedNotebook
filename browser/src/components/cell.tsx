@@ -36,6 +36,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             </select>
             <span> run: </span>
             <button onClick={() => { runCell() }}>run cell</button>
+            <button onClick={() => { interruptCell() }}>interrupt cell</button>
             <span> type: </span>
             <button onClick={() => { onChangeCellType(CellType.MARKDOWN) }}>markdown</button>
             <button onClick={() => { onChangeCellType(CellType.CODE) }}>code</button>
@@ -94,6 +95,10 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
         if (ev.keyCode === 13 && ev.ctrlKey) {
             runCell()
         }
+    }
+
+    const interruptCell = () => {
+        client.emit('cell.interrupt', cellVM.cell)
     }
 
     const runCell = () => {

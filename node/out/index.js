@@ -137,9 +137,27 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                 }
                             });
                         }); });
+                        socket.on('cell.interrupt', function (cell) { return __awaiter(void 0, void 0, void 0, function () {
+                            var error_2;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        _a.trys.push([0, 2, , 3]);
+                                        return [4 /*yield*/, backendManager.interrupt(cell)];
+                                    case 1:
+                                        _a.sent();
+                                        return [3 /*break*/, 3];
+                                    case 2:
+                                        error_2 = _a.sent();
+                                        log.error(error_2);
+                                        return [3 /*break*/, 3];
+                                    case 3: return [2 /*return*/];
+                                }
+                            });
+                        }); });
                         // expose
                         socket.on('expose.variable', function (exposeVarPayload) { return __awaiter(void 0, void 0, void 0, function () {
-                            var exposeVarOutput, exposedVarMapValue, error_2;
+                            var exposeVarOutput, exposedVarMapValue, error_3;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
@@ -151,8 +169,8 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                         socket.emit('expose.variable.ok', exposedVarMapValue);
                                         return [3 /*break*/, 3];
                                     case 2:
-                                        error_2 = _a.sent();
-                                        log.error(error_2);
+                                        error_3 = _a.sent();
+                                        log.error(error_3);
                                         return [3 /*break*/, 3];
                                     case 3: return [2 /*return*/];
                                 }
@@ -171,7 +189,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             });
                         }); });
                         socket.on('expose.variable.import', function (exposedVarMapValue) { return __awaiter(void 0, void 0, void 0, function () {
-                            var _exposedVarMapValue, bool, error_3;
+                            var _exposedVarMapValue, bool, error_4;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
@@ -188,8 +206,8 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                         socket.emit('expose.variable.import.ok', bool);
                                         return [3 /*break*/, 3];
                                     case 2:
-                                        error_3 = _a.sent();
-                                        log.error(error_3);
+                                        error_4 = _a.sent();
+                                        log.error(error_4);
                                         return [3 /*break*/, 3];
                                     case 3: return [2 /*return*/];
                                 }

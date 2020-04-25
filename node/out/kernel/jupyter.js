@@ -418,6 +418,24 @@ var JupyterKernel = /** @class */ (function (_super) {
             });
         });
     };
+    // interrupt
+    JupyterKernel.prototype.interrupt = function (cell) {
+        return __awaiter(this, void 0, void 0, function () {
+            var kernel;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.getRunningKernel(cell.language)];
+                    case 1:
+                        kernel = _a.sent();
+                        if (kernel === null || kernel === void 0 ? void 0 : kernel.id) {
+                            log.info("interrupt kernel id: ", kernel.id);
+                            services_1.KernelAPI.interruptKernel(kernel.id);
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     // list all kernels
     JupyterKernel.prototype.kernels = function () {
         return __awaiter(this, void 0, void 0, function () {

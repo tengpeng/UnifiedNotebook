@@ -14,6 +14,7 @@ export interface IJupyterKernel {
     runningKernels(): void
     shutdownAllKernel(): void
     execute(cell: ICodeCell, onResults: ResultsCallback): void
+    interrupt(cell: ICodeCell): void
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
     importVar(payload: IExposedVarMapValue): Promise<boolean>
 }
@@ -241,6 +242,15 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
             //     let reply = this.handleResult(message)
             //     reply && onResults(reply)
             // };
+        }
+    }
+
+    // interrupt
+    async interrupt(cell: ICodeCell) {
+        let kernel = await this.getRunningKernel(cell.language)
+        if (kernel?.id) {
+            log.info("interrupt kernel id: ", kernel.id)
+            KernelAPI.interruptKernel(kernel.id)
         }
     }
 

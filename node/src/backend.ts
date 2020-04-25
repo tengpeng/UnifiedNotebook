@@ -9,6 +9,7 @@ interface IBackendManager {
     register(kernel: IKernelBase): void
     getBackend(name: string): IKernelBase
     execute(cell: ICodeCell, onResults: ResultsCallback): void
+    interrupt(cell: ICodeCell): void
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
     importVar(payload: IExposedVarMapValue): Promise<boolean>
 }
@@ -35,9 +36,16 @@ export class BackendManager implements IBackendManager {
         return this.backends[name]
     }
 
+    // execute
     async execute(cell: ICodeCell, onResults: ResultsCallback) {
         let backend = this.getBackend(cell.backend)
         await backend.execute(cell, onResults)
+    }
+
+    // interrupt
+    async interrupt(cell: ICodeCell) {
+        let backend = this.getBackend(cell.backend)
+        await backend.interrupt(cell)
     }
 
     // expose variable
