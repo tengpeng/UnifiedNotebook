@@ -8,6 +8,9 @@ export interface ICellViewModel {
 export interface INotebook {
     cells: ICellViewModel[];
 }
+export interface INotebookJSON {
+    cells: ICell[];
+}
 /**
  * id: cell uuid
  * type: code/markdown/parameter

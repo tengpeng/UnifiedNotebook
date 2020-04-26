@@ -1,5 +1,5 @@
-import React from 'react'
-import { INotebookViewModel } from 'common/lib/types.js'
+import React, { useState } from 'react'
+import { INotebookViewModel, INotebookJSON } from 'common/lib/types.js'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
 import { store } from '../store'
@@ -7,6 +7,8 @@ import client from '../socket'
 import { exampleCells } from '../utils/exampleNotebook'
 
 const Toolbar: React.FC<IState> = (props) => {
+    const [notebookName, setNotebookName] = useState('unified-notebook')
+
     // * example notebook data
     const loadExampleNotebook = () => {
         let temp = {
@@ -21,6 +23,21 @@ const Toolbar: React.FC<IState> = (props) => {
         console.log("loadExampleNotebook -> data", data)
 
         store.dispatch({ type: 'updateNotebook', payload: data })
+    }
+
+    const getNotebookJSON = (): INotebookJSON => {
+        let notebook = props.notebookVM.notebook
+        let cellVMs = notebook.cells
+        let cells = cellVMs.map(vm => vm.cell)
+        let notebookJSON = {
+            cells
+        }
+        return notebookJSON
+    }
+
+    const onChangeNotebookName = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value
+        setNotebookName(val)
     }
 
     const shutDownAllKernels = () => {
@@ -39,7 +56,9 @@ const Toolbar: React.FC<IState> = (props) => {
             }}>ping</button>
             <button onClick={shutDownAllKernels}>shutdown all kernels</button>
             <button onClick={clearAllOutputs}>clear all outputs</button>
-            <a style={{ fontSize: '12px' }} download="notebookJSON.json" href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(store.getState(), null, 2))}>download state</a>
+            <button onClick={getNotebookJSON}>get notebook json</button>
+            <input onChange={onChangeNotebookName} value={notebookName} type="text"/>
+            <a style={{ fontSize: '12px' }} download={`${notebookName}.json`} href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(getNotebookJSON(), null, 2))}>download notebook</a>
         </div>
     )
 }

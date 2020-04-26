@@ -18,6 +18,10 @@ export interface ICellViewModel {
 export interface INotebook {
     cells: ICellViewModel[]
 }
+// notebook json data
+export interface INotebookJSON {
+    cells: ICell[]
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                    cell                                    */
