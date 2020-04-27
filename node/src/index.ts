@@ -5,8 +5,9 @@ import { NotebookSocket } from './socket'
 import { JupyterKernel } from './kernel/jupyter'
 import { ZeppelinKernel } from './kernel/zeppelin'
 import { BackendManager } from './backend'
-import { ICodeCell, IExposedVarMap, IExposedVarMapValue, IExposeVarPayload, IExposeVarOutput } from 'common/lib/types'
+import { ICodeCell, IExposedVarMap, IExposedVarMapValue, IExposeVarPayload, IExposeVarOutput, INotebookJSON, INotebookCallbackPayload } from 'common/lib/types'
 import { createLogger } from 'bunyan'
+import { NotebookManager, INotebookManager } from './notebook'
 
 let log = createLogger({ name: 'Main' })
 
@@ -20,6 +21,9 @@ const main = async () => {
     const backendManager = new BackendManager()
     backendManager.register(await new JupyterKernel().init())
     // backendManager.register(await new ZeppelinKernel().init())
+
+    // init notebook runner
+    const notebookManager = new NotebookManager(backendManager)
 
     // exposed variable
     let exposedVarMap: IExposedVarMap = {}
@@ -77,6 +81,21 @@ const main = async () => {
             socket.on('cell.interrupt', async (cell: ICodeCell) => {
                 try {
                     await backendManager.interrupt(cell)
+                } catch (error) {
+                    log.error(error)
+                }
+            })
+            // run notebook
+            socket.on('notebook.run', async (notebook: INotebookJSON) => {
+                try {
+                    await notebookManager.loadNotebookJSON(notebook)
+                    await notebookManager.runNotebook((payload: INotebookCallbackPayload) => {
+                        if (payload.finish) {
+                            socket.emit('notebook.run.ok', payload)
+                        } else {
+                            socket.emit('notebook.run.progress', payload)
+                        }
+                    })
                 } catch (error) {
                     log.error(error)
                 }

@@ -22,6 +22,16 @@ export interface INotebook {
 export interface INotebookJSON {
     cells: ICell[]
 }
+// run notebook callback
+export interface INotebookCallback {
+    (payload: INotebookCallbackPayload): void
+}
+// run notebook callback payload
+export interface INotebookCallbackPayload {
+    current: number;
+    length: number;
+    finish: boolean;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                    cell                                    */

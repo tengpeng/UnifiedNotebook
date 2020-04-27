@@ -11,6 +11,14 @@ export interface INotebook {
 export interface INotebookJSON {
     cells: ICell[];
 }
+export interface INotebookCallback {
+    (payload: INotebookCallbackPayload): void;
+}
+export interface INotebookCallbackPayload {
+    current: number;
+    length: number;
+    finish: boolean;
+}
 /**
  * id: cell uuid
  * type: code/markdown/parameter

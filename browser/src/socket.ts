@@ -1,11 +1,13 @@
 import socketClient from 'socket.io-client'
-import { IExposedVarMapValue, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposedVarMap } from 'common/lib/types'
+import { IExposedVarMapValue, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, IKernelSpecs, IExposedVarMap, INotebookCallbackPayload } from 'common/lib/types'
 import { store } from './store'
-import { cloneCurrentCellVM } from './store/utils'
+import { cloneCurrentCellVM, cloneNotebookVM } from './store/utils'
 
 let client = socketClient('http://localhost:80', { reconnection: true })
 client.on('socketID', handleSocketID)
 client.on('cell.run.ok', handleRunCellSuccess)
+client.on('notebook.run.progress', handleRunNotebookProgress)
+client.on('notebook.run.ok', handleRunNotebookSuccess)
 client.on('kernel.list.ok', handleGetKernels)
 client.on('kernel.running.list.ok', (res: any) => { console.log(JSON.stringify(res.map((item: any) => item.name))) })
 client.on('expose.variable.ok', handleExposeVariable)
@@ -66,6 +68,18 @@ function handleClearOutput(msg: IClearOutput, cell: ICell) {
     let newCellVM = cloneCurrentCellVM(cell)
     newCellVM.cell.outputs = []
     store.dispatch({ type: 'updateCellVM', payload: newCellVM })
+}
+
+// notebook
+function handleRunNotebookProgress(payload: INotebookCallbackPayload) {
+    console.log("handleRunNotebookProgress -> payload", payload)
+}
+
+function handleRunNotebookSuccess(payload: INotebookCallbackPayload) {
+    console.log("handleRunNotebookSuccess -> payload", payload)
+    let notebookVM = store.getState().notebookVM
+    let _notebookVM = cloneNotebookVM(notebookVM)
+    store.dispatch({ type: 'updateNotebookVM', payload: _notebookVM })
 }
 
 // kernel

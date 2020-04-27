@@ -1,4 +1,4 @@
-import { INotebookJSON } from 'common/lib/types'
+import { INotebookJSON, INotebookCallback } from 'common/lib/types'
 import jsonfile from 'jsonfile'
 import path from 'path'
 import { createLogger } from 'bunyan'
@@ -6,12 +6,13 @@ import { BackendManager } from './backend'
 
 const log = createLogger({ name: 'NotebookManager' })
 
-interface INotebookManager {
+export interface INotebookManager {
     loadNotebook(url: string): Promise<INotebookJSON | void>
-    runNotebook(): Promise<boolean>
+    loadNotebookJSON(notebook: INotebookJSON): Promise<void>
+    runNotebook(notebookCallback: INotebookCallback, silent: boolean): Promise<boolean>
 }
 
-class NotebookManager implements INotebookManager {
+export class NotebookManager implements INotebookManager {
     notebookJson: INotebookJSON | undefined
     backendManager: BackendManager
 
@@ -31,17 +32,30 @@ class NotebookManager implements INotebookManager {
         return jsonData
     }
 
+    // parse notebook json file
+    async loadNotebookJSON(notebook: INotebookJSON) {
+        log.info('Load notebook json')
+        // todo verify notebook json data
+        // this.verify(notebook)
+        this.notebookJson = notebook as INotebookJSON
+    }
+
     // run notebook in silent mode
-    async runNotebook(silent: boolean = true) {
+    async runNotebook(notebookCallback: INotebookCallback, silent: boolean = true) {
+        log.info('Run notebook json')
         if (!this.notebookJson) return false
         if (silent) {
             let cells = this.notebookJson.cells
             let length = cells.length
+            let finish = false
+            log.info('Notebook cell length: ', length)
             for (let i = 0; i < length; i++) {
-                await this.backendManager.execute(cells[i], () => {
-                    log.info(`Executing cell: ${i} / length`)
-                })
+                await this.backendManager.execute(cells[i], () => { })
+                log.info(`Executing cell: ${i + 1} / ${length}`)
+                notebookCallback({ current: i, length, finish })
             }
+            finish = true
+            notebookCallback({ current: length - 1, length, finish })
             log.info(`Executing finished`)
         } else {
             // todo write output to json data

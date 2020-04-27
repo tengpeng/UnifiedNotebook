@@ -40,6 +40,11 @@ const Toolbar: React.FC<IState> = (props) => {
         setNotebookName(val)
     }
 
+    const runNotebook = () => {
+        let notebookJSON = getNotebookJSON()
+        client.emit('notebook.run', notebookJSON)
+    }
+
     const shutDownAllKernels = () => {
         client.emit('kernel.shutdown.all')
     }
@@ -51,14 +56,16 @@ const Toolbar: React.FC<IState> = (props) => {
     return (
         <div>
             <button onClick={loadExampleNotebook}>load example notebook</button>
+            <button onClick={runNotebook}>run notebook</button>
+            <span> | </span>
+            <input onChange={onChangeNotebookName} value={notebookName} type="text"/>
+            <a style={{ fontSize: '12px' }} download={`${notebookName}.json`} href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(getNotebookJSON(), null, 2))}>download notebook</a>
+            <br/>
             <button onClick={() => {
                 client.emit('nb.ping')
             }}>ping</button>
             <button onClick={shutDownAllKernels}>shutdown all kernels</button>
             <button onClick={clearAllOutputs}>clear all outputs</button>
-            <button onClick={getNotebookJSON}>get notebook json</button>
-            <input onChange={onChangeNotebookName} value={notebookName} type="text"/>
-            <a style={{ fontSize: '12px' }} download={`${notebookName}.json`} href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(getNotebookJSON(), null, 2))}>download notebook</a>
         </div>
     )
 }

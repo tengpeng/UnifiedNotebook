@@ -1,4 +1,4 @@
-import { ICell } from 'common/lib/types'
+import { ICell, INotebookViewModel } from 'common/lib/types'
 import { ICellState, ICodeCell, ICellViewModel, CellType } from 'common/lib/types'
 import { v4 as uuid } from 'uuid'
 import { store } from './index'
@@ -49,4 +49,11 @@ export const createEmptyCodeCellVM = (id?: string): ICellViewModel => {
     let emptyCell = createEmptyCodeCell(id)
     let emptyCellVM = createCellVM(emptyCell)
     return emptyCellVM
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                 notebookVM                                 */
+/* -------------------------------------------------------------------------- */
+export const cloneNotebookVM = (notebookVM: INotebookViewModel) => {
+    return cloneDeep(notebookVM)
 }

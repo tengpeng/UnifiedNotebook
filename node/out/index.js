@@ -46,10 +46,11 @@ var socket_1 = require("./socket");
 var jupyter_1 = require("./kernel/jupyter");
 var backend_1 = require("./backend");
 var bunyan_1 = require("bunyan");
+var notebook_1 = require("./notebook");
 var log = bunyan_1.createLogger({ name: 'Main' });
 dotenv_1.default.config();
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, backendManager, _a, _b, exposedVarMap, updateExposeMap, createExposedVarMapValue, getExposedVarMapValueWithOutJsonData, clearExposeMap, notebookSocket;
+    var app, port, backendManager, _a, _b, notebookManager, exposedVarMap, updateExposeMap, createExposedVarMapValue, getExposedVarMapValueWithOutJsonData, clearExposeMap, notebookSocket;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
@@ -60,6 +61,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                 return [4 /*yield*/, new jupyter_1.JupyterKernel().init()];
             case 1:
                 _b.apply(_a, [_c.sent()]);
+                notebookManager = new notebook_1.NotebookManager(backendManager);
                 exposedVarMap = {};
                 updateExposeMap = function (store) {
                     exposedVarMap[store.id] = store;
@@ -155,9 +157,38 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                 }
                             });
                         }); });
+                        // run notebook
+                        socket.on('notebook.run', function (notebook) { return __awaiter(void 0, void 0, void 0, function () {
+                            var error_3;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        _a.trys.push([0, 3, , 4]);
+                                        return [4 /*yield*/, notebookManager.loadNotebookJSON(notebook)];
+                                    case 1:
+                                        _a.sent();
+                                        return [4 /*yield*/, notebookManager.runNotebook(function (payload) {
+                                                if (payload.finish) {
+                                                    socket.emit('notebook.run.ok', payload);
+                                                }
+                                                else {
+                                                    socket.emit('notebook.run.progress', payload);
+                                                }
+                                            })];
+                                    case 2:
+                                        _a.sent();
+                                        return [3 /*break*/, 4];
+                                    case 3:
+                                        error_3 = _a.sent();
+                                        log.error(error_3);
+                                        return [3 /*break*/, 4];
+                                    case 4: return [2 /*return*/];
+                                }
+                            });
+                        }); });
                         // expose
                         socket.on('expose.variable', function (exposeVarPayload) { return __awaiter(void 0, void 0, void 0, function () {
-                            var exposeVarOutput, exposedVarMapValue, error_3;
+                            var exposeVarOutput, exposedVarMapValue, error_4;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
@@ -169,8 +200,8 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                         socket.emit('expose.variable.ok', exposedVarMapValue);
                                         return [3 /*break*/, 3];
                                     case 2:
-                                        error_3 = _a.sent();
-                                        log.error(error_3);
+                                        error_4 = _a.sent();
+                                        log.error(error_4);
                                         return [3 /*break*/, 3];
                                     case 3: return [2 /*return*/];
                                 }
@@ -189,7 +220,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                             });
                         }); });
                         socket.on('expose.variable.import', function (exposedVarMapValue) { return __awaiter(void 0, void 0, void 0, function () {
-                            var _exposedVarMapValue, bool, error_4;
+                            var _exposedVarMapValue, bool, error_5;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
@@ -206,8 +237,8 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                                         socket.emit('expose.variable.import.ok', bool);
                                         return [3 /*break*/, 3];
                                     case 2:
-                                        error_4 = _a.sent();
-                                        log.error(error_4);
+                                        error_5 = _a.sent();
+                                        log.error(error_5);
                                         return [3 /*break*/, 3];
                                     case 3: return [2 /*return*/];
                                 }

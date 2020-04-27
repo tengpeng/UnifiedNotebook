@@ -18,6 +18,7 @@ const Notebook: React.FC<IState> = ({ notebookVM }) => {
     const getKernels = () => {
         client.emit('kernel.list')
     }
+
     const getRunningKernels = () => {
         client.emit('kernel.running.list')
     }
