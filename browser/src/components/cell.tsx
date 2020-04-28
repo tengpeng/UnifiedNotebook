@@ -7,7 +7,7 @@ import { store } from '../store'
 import { IState } from '../store/reducer'
 import { connect } from 'react-redux'
 import client from '../socket'
-import ImportExpose from './importExpose'
+import ImportExpose from './import-expose'
 
 interface Props extends IState {
     cellVM: ICellViewModel
