@@ -39,7 +39,8 @@ export class BackendManager implements IBackendManager {
     // execute
     async execute(cell: ICodeCell, onResults: ResultsCallback) {
         let backend = this.getBackend(cell.backend)
-        await backend.execute(cell, onResults)
+        let finished = await backend.execute(cell, onResults)
+        return finished
     }
 
     // interrupt

@@ -12,7 +12,7 @@ export interface IKernelBase {
     kernels(): Promise<IKernelSpecs>
     runningKernels(): void
     shutdownAllKernel(): void
-    execute(cell: ICodeCell, onResults: ResultsCallback): void
+    execute(cell: ICodeCell, onResults: ResultsCallback): Promise<boolean>
     interrupt(cell: ICodeCell): void
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
     importVar(payload: IExposedVarMapValue): Promise<boolean>
@@ -32,7 +32,7 @@ export class KernelBase implements IKernelBase {
     init() {
         throw new Error("Method not implemented.");
     }
-    execute(cell: ICodeCell, onResults: ResultsCallback): void {
+    execute(cell: ICodeCell, onResults: ResultsCallback): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
     interrupt(cell: ICodeCell): void {

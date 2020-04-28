@@ -2,7 +2,7 @@ import { createLogger } from 'bunyan'
 import { KernelMessage, KernelAPI, KernelManager, Kernel, KernelSpecAPI } from "@jupyterlab/services";
 import { ISessionOptions } from '@jupyterlab/services/lib/session/session';
 import { KernelBase, ResultsCallback } from './kernel'
-import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue, isErrorOutput } from 'common/lib/types'
+import { IExecuteResultOutput, IMimeBundle, IStreamOutput, IDiaplayOutput, IClearOutput, IErrorOutput, IStatusOutput, ICellState, ICodeCell, IKernelSpecs, isExecuteResultOutput, isStreamOutput, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue, isErrorOutput, isStatusOutput, ICellOutput } from 'common/lib/types'
 import { formatStreamText, concatMultilineStringOutput } from '../utils/common'
 import { ISpecModel } from '@jupyterlab/services/lib/kernelspec/restapi';
 import cloneDeep from 'lodash/cloneDeep'
@@ -13,7 +13,7 @@ export interface IJupyterKernel {
     kernels(): Promise<IKernelSpecs>
     runningKernels(): void
     shutdownAllKernel(): void
-    execute(cell: ICodeCell, onResults: ResultsCallback): void
+    execute(cell: ICodeCell, onResults: ResultsCallback): Promise<boolean>
     interrupt(cell: ICodeCell): void
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
     importVar(payload: IExposedVarMapValue): Promise<boolean>
@@ -163,6 +163,16 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         }
     }
 
+    private ifFinished(reply: ICellOutput): boolean {
+        let bool = false
+        if (isStatusOutput(reply)) {
+            if ((reply as IStatusOutput).state === ICellState.Finished) {
+                bool = true
+            }
+        }
+        return bool
+    }
+
     // repl
     private async exposeRepl(exposeVarPayload: IExposeVarPayload, codeToExecute: string): Promise<string> {
         return new Promise(async (res, rej) => {
@@ -228,21 +238,26 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         log.info("jupyter execute cell")
         await this.switchKernelIfNeeded(cell)
         const future = this.kernel?.requestExecute({ code: cell.source });
-        if (future) {
-            future.onIOPub = message => {
-                let reply = this.handleResult(message)
-                reply && onResults(reply);
-            };
-            // todo other message
-            // future.onReply = message => {
-            //     let reply = this.handleResult(message)
-            //     reply && onResults(reply)
-            // };
-            // future.onStdin = message => {
-            //     let reply = this.handleResult(message)
-            //     reply && onResults(reply)
-            // };
-        }
+        return new Promise<boolean>((res, rej) => {
+            if (future) {
+                future.onIOPub = message => {
+                    let reply = this.handleResult(message)
+                    reply && onResults(reply);
+                    if (reply && this.ifFinished(reply)) {
+                        res(true)
+                    }
+                };
+                // todo other message
+                // future.onReply = message => {
+                //     let reply = this.handleResult(message)
+                //     reply && onResults(reply)
+                // };
+                // future.onStdin = message => {
+                //     let reply = this.handleResult(message)
+                //     reply && onResults(reply)
+                // };
+            }
+        })
     }
 
     // interrupt

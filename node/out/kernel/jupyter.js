@@ -300,6 +300,15 @@ var JupyterKernel = /** @class */ (function (_super) {
             state: state
         };
     };
+    JupyterKernel.prototype.ifFinished = function (reply) {
+        var bool = false;
+        if (types_1.isStatusOutput(reply)) {
+            if (reply.state === types_1.ICellState.Finished) {
+                bool = true;
+            }
+        }
+        return bool;
+    };
     // repl
     JupyterKernel.prototype.exposeRepl = function (exposeVarPayload, codeToExecute) {
         return __awaiter(this, void 0, void 0, function () {
@@ -398,22 +407,26 @@ var JupyterKernel = /** @class */ (function (_super) {
                     case 1:
                         _b.sent();
                         future = (_a = this.kernel) === null || _a === void 0 ? void 0 : _a.requestExecute({ code: cell.source });
-                        if (future) {
-                            future.onIOPub = function (message) {
-                                var reply = _this.handleResult(message);
-                                reply && onResults(reply);
-                            };
-                            // todo other message
-                            // future.onReply = message => {
-                            //     let reply = this.handleResult(message)
-                            //     reply && onResults(reply)
-                            // };
-                            // future.onStdin = message => {
-                            //     let reply = this.handleResult(message)
-                            //     reply && onResults(reply)
-                            // };
-                        }
-                        return [2 /*return*/];
+                        return [2 /*return*/, new Promise(function (res, rej) {
+                                if (future) {
+                                    future.onIOPub = function (message) {
+                                        var reply = _this.handleResult(message);
+                                        reply && onResults(reply);
+                                        if (reply && _this.ifFinished(reply)) {
+                                            res(true);
+                                        }
+                                    };
+                                    // todo other message
+                                    // future.onReply = message => {
+                                    //     let reply = this.handleResult(message)
+                                    //     reply && onResults(reply)
+                                    // };
+                                    // future.onStdin = message => {
+                                    //     let reply = this.handleResult(message)
+                                    //     reply && onResults(reply)
+                                    // };
+                                }
+                            })];
                 }
             });
         });

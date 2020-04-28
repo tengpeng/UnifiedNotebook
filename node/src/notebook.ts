@@ -75,14 +75,12 @@ export class NotebookManager implements INotebookManager {
         let length = cells.length
         let finish = false
         log.info('Notebook cell length: ', length)
-        // todo the callback not finished
         for (let [index, cell] of Object.entries(cells)) {
-            // let res: IResponse = { msg: output, cell }
             await this.backendManager.execute(cell, (output: ICellOutput) => {
                 if (silent) {
                     // ignore
                 } else {
-                    // this.handleRunCellSuccess({ msg: output, cell })
+                    this.handleRunCellSuccess({ msg: output, cell })
                 }
             })
             log.info(`Executing cell: ${Number(index) + 1} / ${length}`)

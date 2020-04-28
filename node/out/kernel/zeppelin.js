@@ -362,7 +362,8 @@ var ZeppelinKernel = /** @class */ (function (_super) {
     };
     ZeppelinKernel.prototype.execute = function (cell, onResults) {
         return __awaiter(this, void 0, void 0, function () {
-            var source, res, reply;
+            var source, res;
+            var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -375,11 +376,13 @@ var ZeppelinKernel = /** @class */ (function (_super) {
                     case 2:
                         res = _a.sent();
                         console.log("execute -> res", res);
-                        if (res) {
-                            reply = this.handleResult(res);
-                            reply && onResults(reply);
-                        }
-                        return [2 /*return*/];
+                        return [2 /*return*/, new Promise(function (resolve, rej) {
+                                if (res) {
+                                    var reply = _this.handleResult(res);
+                                    reply && onResults(reply);
+                                    resolve(true);
+                                }
+                            })];
                 }
             });
         });

@@ -23,7 +23,7 @@ export interface IZeppelinKernel {
     noteId: string
     paragraphId: string
     kernels(): Promise<IKernelSpecs>
-    execute(cell: ICodeCell, onResults: ResultsCallback): void
+    execute(cell: ICodeCell, onResults: ResultsCallback): Promise<boolean>
 }
 
 /* -------------------------------------------------------------------------- */
@@ -222,16 +222,19 @@ export class ZeppelinKernel extends KernelBase implements IZeppelinKernel {
         // todo
     }
 
-    async execute(cell: ICodeCell, onResults: ResultsCallback) {
+    async execute(cell: ICodeCell, onResults: ResultsCallback): Promise<boolean> {
         let { source } = cell
         source = `%${cell.language}\n${source}`
         await this.updateParagraph(this.noteId, this.paragraphId, source)
         let res: IMsg = await this.runParagraph(this.noteId, this.paragraphId)
         console.log("execute -> res", res)
 
-        if (res) {
-            let reply = this.handleResult(res)
-            reply && onResults(reply)
-        }
+        return new Promise((resolve, rej) => {
+            if (res) {
+                let reply = this.handleResult(res)
+                reply && onResults(reply)
+                resolve(true)
+            }
+        })
     }
 }
