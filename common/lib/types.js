@@ -35,3 +35,7 @@ function isClearOutput(msg) {
     return msg.type === 'clear';
 }
 exports.isClearOutput = isClearOutput;
+function isParameterCell(cell) {
+    return cell.type === CellType.PARAMETER;
+}
+exports.isParameterCell = isParameterCell;

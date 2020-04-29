@@ -93,6 +93,7 @@ export declare function isStatusOutput(msg: ICellOutput): boolean;
 export declare function isStreamOutput(msg: ICellOutput): boolean;
 export declare function isErrorOutput(msg: ICellOutput): boolean;
 export declare function isClearOutput(msg: ICellOutput): boolean;
+export declare function isParameterCell(cell: ICodeCell): boolean;
 export interface IResponse {
     msg: ICellOutput;
     cell: ICell;

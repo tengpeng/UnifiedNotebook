@@ -40,6 +40,7 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
             <span> type: </span>
             <button onClick={() => { onChangeCellType(CellType.MARKDOWN) }}>markdown</button>
             <button onClick={() => { onChangeCellType(CellType.CODE) }}>code</button>
+            <button onClick={() => { onChangeCellType(CellType.PARAMETER) }}>parameter(py)</button>
             <span> output: </span>
             <button onClick={() => { onClearCellOutput() }}>clear</button>
             <br />

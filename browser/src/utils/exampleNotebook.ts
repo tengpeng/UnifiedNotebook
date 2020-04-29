@@ -173,3 +173,35 @@ export function exampleCells(): { cells: ICell[] } {
         ]
     }
 }
+
+export function parameterExampleCells(): { cells: ICell[] } {
+    return {
+        cells: [{
+            id: '646ace57-6412-49d1-95aa-a44846fa401a',
+            type: CellType.PARAMETER,
+            source: '#parameter example\n\nfname = "oliver"',
+            language: 'python',
+            backend: 'Jupyter',
+            metadata: {
+                scrollbar: false,
+                source_hidden: false,
+                output_hidden: false
+            },
+            outputs: [],
+            state: ICellState.Finished,
+        }, {
+            id: '3df31bb7-49d2-4632-8d8b-246204313b7e',
+            type: CellType.CODE,
+            source: '#parameter example\n\nprint(fname)',
+            language: 'python',
+            backend: 'Jupyter',
+            metadata: {
+                scrollbar: false,
+                source_hidden: false,
+                output_hidden: false
+            },
+            outputs: [],
+            state: ICellState.Finished,
+        }]
+    }
+}

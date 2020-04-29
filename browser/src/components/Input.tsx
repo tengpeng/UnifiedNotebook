@@ -27,8 +27,24 @@ export const Input: React.FC<Props> = ({ cellVM, onInputChange, onKeyDown }) => 
             onChange={(event) => onInputChange(event, cellVM)} ></textarea>
     }
 
+    const renderParameterInput = () => {
+        return <textarea
+            style={{ width: '100%', minHeight: "100px" }}
+            value={cellVM.cell.source}
+            placeholder="parameter(py)"
+            onKeyDown={onKeyDown}
+            onChange={(event) => onInputChange(event, cellVM)} ></textarea>
+    }
+
     const render = () => {
-        return cellVM.cell.type === CellType.MARKDOWN ? renderMarkdownInput() : renderCodeInput()
+        let type = cellVM.cell.type
+        if (type === CellType.MARKDOWN) {
+            return renderMarkdownInput()
+        } else if (type === CellType.PARAMETER) {
+            return renderParameterInput()
+        } else {
+            return renderCodeInput()
+        }
     }
 
     return (

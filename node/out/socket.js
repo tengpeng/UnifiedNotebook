@@ -42,6 +42,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var http_1 = require("http");
 var socket_io_1 = __importDefault(require("socket.io"));
 var bunyan_1 = require("bunyan");
+var types_1 = require("common/lib/types");
 var log = bunyan_1.createLogger({ name: 'Socket' });
 var SocketManager = /** @class */ (function () {
     function SocketManager(app, port, backendManager, notebookManager) {
@@ -104,18 +105,26 @@ var SocketManager = /** @class */ (function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, this.backendManager.execute(cell, function (msg) {
-                                    socket.emit('cell.run.ok', { msg: msg, cell: cell });
-                                })];
+                            _a.trys.push([0, 5, , 6]);
+                            if (!types_1.isParameterCell(cell)) return [3 /*break*/, 2];
+                            // todo
+                            return [4 /*yield*/, this.backendManager.executeParameter(cell)];
                         case 1:
+                            // todo
                             _a.sent();
-                            return [3 /*break*/, 3];
-                        case 2:
+                            return [3 /*break*/, 4];
+                        case 2: return [4 /*yield*/, this.backendManager.execute(cell, function (msg) {
+                                socket.emit('cell.run.ok', { msg: msg, cell: cell });
+                            })];
+                        case 3:
+                            _a.sent();
+                            _a.label = 4;
+                        case 4: return [3 /*break*/, 6];
+                        case 5:
                             error_1 = _a.sent();
                             log.error(error_1);
-                            return [3 /*break*/, 3];
-                        case 3: return [2 /*return*/];
+                            return [3 /*break*/, 6];
+                        case 6: return [2 /*return*/];
                     }
                 });
             }); };

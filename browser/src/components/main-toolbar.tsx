@@ -1,18 +1,17 @@
 import React, { useState } from 'react'
-import { INotebookViewModel, INotebookJSON } from 'common/lib/types.js'
+import { INotebookViewModel, INotebookJSON, ICell } from 'common/lib/types.js'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
 import { store } from '../store'
 import client from '../socket'
-import { exampleCells } from '../utils/exampleNotebook'
+import { exampleCells, parameterExampleCells } from '../utils/exampleNotebook'
 
-const Toolbar: React.FC<IState> = (props) => {
+const MainToolbar: React.FC<IState> = (props) => {
     const [notebookName, setNotebookName] = useState('unified-notebook')
 
-    // * example notebook data
-    const loadExampleNotebook = () => {
+    const loadNotebook = (cells: ICell[]) => {
         let temp = {
-            cells: exampleCells().cells
+            cells
         }
         let data: INotebookViewModel = {
             notebook: { cells: [] }
@@ -21,8 +20,16 @@ const Toolbar: React.FC<IState> = (props) => {
             data.notebook.cells.push({ cell: cellItem, exposed: '' })
         })
         console.log("loadExampleNotebook -> data", data)
-
         store.dispatch({ type: 'updateNotebook', payload: data })
+    }
+
+    // * example notebook data
+    const loadExampleNotebook = () => {
+        loadNotebook(exampleCells().cells)
+    }
+
+    const loadParameterExampleNotebook = () => {
+        loadNotebook(parameterExampleCells().cells)
     }
 
     const getNotebookJSON = (): INotebookJSON => {
@@ -54,13 +61,16 @@ const Toolbar: React.FC<IState> = (props) => {
     }
 
     return (
-        <div>
-            <button onClick={loadExampleNotebook}>load example notebook</button>
+        <div style={{ background: '#ccc', padding: '10px' }}>
+            <span> load: </span>
+            <button onClick={loadExampleNotebook}>example notebook</button>
+            <button onClick={loadParameterExampleNotebook}>parameter example notebook</button>
+            <br />
             <button onClick={runNotebook}>run notebook</button>
             <span> | </span>
-            <input onChange={onChangeNotebookName} value={notebookName} type="text"/>
+            <input onChange={onChangeNotebookName} value={notebookName} type="text" />
             <a style={{ fontSize: '12px' }} download={`${notebookName}.json`} href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(getNotebookJSON(), null, 2))}>download notebook</a>
-            <br/>
+            <br />
             <button onClick={() => {
                 client.emit('nb.ping')
             }}>ping</button>
@@ -72,4 +82,4 @@ const Toolbar: React.FC<IState> = (props) => {
 
 const mapStateToProps = (state: IState) => state
 
-export default connect(mapStateToProps)(Toolbar)
+export default connect(mapStateToProps)(MainToolbar)

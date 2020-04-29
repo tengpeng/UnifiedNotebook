@@ -1,5 +1,5 @@
 import { IKernelBase, ResultsCallback } from './kernel/kernel'
-import { IKernelSpecs, ICodeCell, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue } from 'common/lib/types'
+import { IKernelSpecs, ICodeCell, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue, isParameterCell } from 'common/lib/types'
 import { createLogger } from 'bunyan'
 
 const log = createLogger({ name: 'BackendManager' })
@@ -41,6 +41,13 @@ export class BackendManager implements IBackendManager {
         let backend = this.getBackend(cell.backend)
         let finished = await backend.execute(cell, onResults)
         return finished
+    }
+
+    // execute parameter
+    async executeParameter(cell: ICodeCell) {
+        // * Only support python parameter cell currently
+        // todo Get all backends and call executeParameter function
+        // todo run cell in every running kernel
     }
 
     // interrupt

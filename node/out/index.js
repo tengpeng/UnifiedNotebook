@@ -44,16 +44,15 @@ var cors_1 = __importDefault(require("cors"));
 var dotenv_1 = __importDefault(require("dotenv"));
 var socket_1 = require("./socket");
 var jupyter_1 = require("./kernel/jupyter");
-var zeppelin_1 = require("./kernel/zeppelin");
 var backend_1 = require("./backend");
 var bunyan_1 = require("bunyan");
 var notebook_1 = require("./notebook");
 var log = bunyan_1.createLogger({ name: 'Main' });
 dotenv_1.default.config();
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var app, port, backendManager, _a, _b, _c, _d, notebookManager, socketManager;
-    return __generator(this, function (_e) {
-        switch (_e.label) {
+    var app, port, backendManager, _a, _b, notebookManager, socketManager;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 app = express_1.default();
                 port = process.env.EXPRESS_PORT;
@@ -61,11 +60,7 @@ var main = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _b = (_a = backendManager).register;
                 return [4 /*yield*/, new jupyter_1.JupyterKernel().init()];
             case 1:
-                _b.apply(_a, [_e.sent()]);
-                _d = (_c = backendManager).register;
-                return [4 /*yield*/, new zeppelin_1.ZeppelinKernel().init()];
-            case 2:
-                _d.apply(_c, [_e.sent()]);
+                _b.apply(_a, [_c.sent()]);
                 notebookManager = new notebook_1.NotebookManager(backendManager);
                 socketManager = new socket_1.SocketManager(app, 80, backendManager, notebookManager);
                 // express middleware

@@ -19,7 +19,7 @@ const main = async () => {
     // init zeppelin and jupyter
     const backendManager = new BackendManager()
     backendManager.register(await new JupyterKernel().init())
-    backendManager.register(await new ZeppelinKernel().init())
+    // backendManager.register(await new ZeppelinKernel().init())
 
     // init notebook runner
     const notebookManager = new NotebookManager(backendManager)

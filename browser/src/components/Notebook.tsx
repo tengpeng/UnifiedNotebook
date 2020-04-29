@@ -3,7 +3,7 @@ import { ICellViewModel } from 'common/lib/types.js'
 import Cell from './cell'
 import { connect } from 'react-redux'
 import { IState } from '../store/reducer'
-import Toolbar from './toolbar'
+import MainToolbar from './main-toolbar'
 import client from '../socket'
 
 const Notebook: React.FC<IState> = ({ notebookVM }) => {
@@ -32,7 +32,7 @@ const Notebook: React.FC<IState> = ({ notebookVM }) => {
 
     return (
         <>
-            <Toolbar />
+            <MainToolbar />
             {getContent()}
         </>
     )
