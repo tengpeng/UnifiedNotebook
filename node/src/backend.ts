@@ -1,16 +1,25 @@
 import { IKernelBase, ResultsCallback } from './kernel/kernel'
-import { IKernelSpecs, ICodeCell, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue, isParameterCell, IKernelNames } from 'common/lib/types'
+import { IKernelSpecs, ICodeCell, IExposeVarPayload, IExposeVarOutput, IExposedVarMapValue, IKernelInfo } from 'common/lib/types'
 import { createLogger } from 'bunyan'
 import { Script, createContext } from 'vm'
+import { createEmptyCodeCell } from 'common/lib/utils'
 
 const log = createLogger({ name: 'BackendManager' })
+
+type ITranslatedMap = {
+    [key: string]: {
+        code: string,
+        backend: string,
+        language: string
+    }
+}
 
 interface IBackendManager {
     kernels(): Promise<IKernelSpecs>
     register(kernel: IKernelBase): void
     getBackend(name: string): IKernelBase
     execute(cell: ICodeCell, onResults: ResultsCallback): void
-    executeParameter(cell: ICodeCell, kernels: IKernelNames): void
+    executeParameter(cell: ICodeCell, kernelInfo: IKernelInfo): Promise<Boolean>
     interrupt(cell: ICodeCell): void
     exposeVar(payload: IExposeVarPayload): Promise<IExposeVarOutput>
     importVar(payload: IExposedVarMapValue): Promise<boolean>
@@ -55,9 +64,9 @@ export class BackendManager implements IBackendManager {
                 // translate types
                 _variables.forEach(variable => {
                     if (['[object Number]', '[object String]'].includes(variable.type)) {
-                        code = code + `${variable.name} = ${variable.value}\\n`
+                        code = code + `${variable.name} = "${variable.value}";`
                     } else if (['[object Object]', '[object Array]'].includes(variable.type)) {
-                        code = code + `${variable.name} = ${JSON.stringify(variable.value)}\\n` // support dict/list
+                        code = code + `${variable.name} = ${JSON.stringify(variable.value)};` // support dict/list
                     } else {
                         // ignore
                     }
@@ -71,18 +80,22 @@ export class BackendManager implements IBackendManager {
         return script.runInContext(ctx)
     }
 
-    private translateToLanguage(cell: ICodeCell, kernels: IKernelNames) {
-        let translatedMap: {
-            [key: string]: string
-        } = {}
-        for (const kernelName of Object.values(kernels)) {
+    private translateToLanguage(cell: ICodeCell, kernelInfo: IKernelInfo) {
+        log.info('Translate to language')
+        let translatedMap: ITranslatedMap = {}
+        for (const info of Object.values(kernelInfo)) {
             // translate language
-            if (['python', 'python3'].includes(kernelName)) {
-                translatedMap[kernelName] = this.translateToPython(cell)
+            if (['python3'].includes(info.language)) {
+                translatedMap[info.language] = {
+                    code: this.translateToPython(cell),
+                    backend: info.backend,
+                    language: info.language
+                }
             } else {
                 // todo
             }
         }
+        log.info('Translate to language finished', translatedMap)
         return translatedMap
     }
 
@@ -94,13 +107,24 @@ export class BackendManager implements IBackendManager {
     }
 
     // execute parameter
-    async executeParameter(cell: ICodeCell, kernels: IKernelNames) {
+    async executeParameter(cell: ICodeCell, kernelInfo: IKernelInfo): Promise<Boolean> {
+        log.info('Execute parameter')
         // * Only support javascript to python parameter cell currently
-        // todo Get all backends and call executeParameter function
-        // todo run cell in every running kernel
-        // todo Translate parameter code string to each language based on kernels
-        let translatedMap = this.translateToLanguage(cell, kernels)
+        // * Get all backends and call executeParameter function
+        // * run cell in every running kernel
+        // todo Translate parameter code string to each language based on kernelInfo
+        let translatedMap = this.translateToLanguage(cell, kernelInfo)
         console.log("BackendManager -> executeParameter -> translatedMap", translatedMap)
+        let promises = []
+        for (const translated of Object.values(translatedMap)) {
+            let _cell = createEmptyCodeCell()
+            _cell.backend = translated.backend
+            _cell.language = translated.language
+            _cell.source = translated.code
+            promises.push(await this.execute(_cell, res => { console.log(res) }))
+        }
+        let res = await Promise.all(promises)
+        return res.every(Boolean)
     }
 
     // interrupt

@@ -290,7 +290,7 @@ export class JupyterKernel extends KernelBase implements IJupyterKernel {
         let variable = exposeVarPayload.exposeVar
         let temp_variable = 'temp_unified_notebook_var'
         let code
-        if (['python3', 'python'].includes(language)) {
+        if (['python3'].includes(language)) {
             code = `
 import json
 ${temp_variable} = json.dumps(${variable})
@@ -316,7 +316,7 @@ delete global.${temp_variable}`
         let jsonData = exposedMapValue.jsonData
         if (!language || !variableRename || !jsonData) return ''
         let code
-        if (['python3', 'python'].includes(language)) {
+        if (['python3'].includes(language)) {
             code = `
 import json
 ${variableRename} = (json.loads("${jsonData.trim()}"))

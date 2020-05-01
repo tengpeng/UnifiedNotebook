@@ -2,7 +2,10 @@
   "name": "common",
   "version": "0.1.0",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@types/uuid": "^7.0.3",
+    "uuid": "^8.0.0"
+  },
   "scripts": {
     "watch": "del ./lib/**/* && tsc --build ./tsconfig.json -w"
   },

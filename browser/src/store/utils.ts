@@ -1,8 +1,9 @@
-import { ICell, INotebookViewModel, IKernelNames } from 'common/lib/types'
-import { ICellState, ICodeCell, ICellViewModel, CellType } from 'common/lib/types'
-import { v4 as uuid } from 'uuid'
+import { ICell, INotebookViewModel, IKernelInfo } from 'common/lib/types'
+import { ICodeCell, ICellViewModel } from 'common/lib/types'
 import { store } from './index'
 import cloneDeep from 'lodash/cloneDeep'
+import uniqBy from 'lodash/uniqBy'
+import { createEmptyCodeCell } from 'common/lib/utils'
 
 /* -------------------------------------------------------------------------- */
 /*                                   cellVM                                   */
@@ -16,25 +17,6 @@ export const getCurrentCellVM = (cell: ICell) => {
 
 export const cloneCurrentCellVM = (cell: ICell) => {
     return cloneDeep(getCurrentCellVM(cell))
-}
-
-// create cell
-export const createEmptyCodeCell = (id?: string): ICodeCell => {
-    let emptyCell = {
-        id: id ?? uuid(),
-        type: CellType.CODE,
-        source: '',
-        language: 'python3', // todo testing select python3 by default
-        backend: 'Jupyter',
-        metadata: {
-            scrollbar: true,
-            source_hidden: false,
-            output_hidden: false,
-        },
-        state: ICellState.Finished,
-        outputs: [],
-    }
-    return emptyCell;
 }
 
 export const createCellVM = (emptyCell: ICodeCell): ICellViewModel => {
@@ -58,9 +40,12 @@ export const cloneNotebookVM = (notebookVM: INotebookViewModel) => {
     return cloneDeep(notebookVM)
 }
 
-export const getNotebookKernels = (notebookVM: INotebookViewModel): IKernelNames => {
+export const getNotebookKernelInfo = (notebookVM: INotebookViewModel): IKernelInfo => {
     let cells = notebookVM.notebook.cells
-    let kernels = cells.map(cell => cell.cell.language) // language in jupyter means kernel name
-    kernels = Array.from(new Set(kernels))
-    return kernels
+    let info = cells.map(cell => ({
+        language: cell.cell.language,
+        backend: cell.cell.backend
+    })) // language in jupyter means kernel name
+    info = uniqBy(info, 'language')
+    return info
 }

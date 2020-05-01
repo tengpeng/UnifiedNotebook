@@ -8,7 +8,7 @@ import { IState } from '../store/reducer'
 import { connect } from 'react-redux'
 import client from '../socket'
 import ImportExpose from './import-expose'
-import { getNotebookKernels } from '../store/utils'
+import { getNotebookKernelInfo } from '../store/utils'
 
 interface Props extends IState {
     cellVM: ICellViewModel
@@ -105,8 +105,8 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
 
     const runCell = () => {
         if (isParameterCell(cellVM.cell)) {
-            let kernels = getNotebookKernels(notebookVM)
-            client.emit('cell.run', cellVM.cell, kernels)
+            let kernelInfo = getNotebookKernelInfo(notebookVM)
+            client.emit('cell.run', cellVM.cell, kernelInfo)
         } else {
             client.emit('cell.run', cellVM.cell)
         }

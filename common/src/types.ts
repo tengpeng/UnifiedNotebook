@@ -164,7 +164,10 @@ export interface IKernelSpec {
     backend: string
 }
 export type IKernelSpecs = IKernelSpec[]
-export type IKernelNames = string[]
+export type IKernelInfo = {
+    language: string,
+    backend: string
+}[]
 
 /* -------------------------------------------------------------------------- */
 /*                                  ExposeVar                                 */

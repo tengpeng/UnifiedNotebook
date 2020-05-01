@@ -3,7 +3,7 @@ import socketIO from 'socket.io'
 import type { Server } from 'http'
 import { createLogger } from 'bunyan'
 import { BackendManager } from './backend'
-import { ICodeCell, INotebookJSON, INotebookCallbackPayload, IExposeVarPayload, IExposedVarMap, IExposedVarMapValue, IExposeVarOutput, isParameterCell, IKernelNames } from 'common/lib/types'
+import { ICodeCell, INotebookJSON, INotebookCallbackPayload, IExposeVarPayload, IExposedVarMap, IExposedVarMapValue, IExposeVarOutput, isParameterCell, IKernelInfo } from 'common/lib/types'
 import { NotebookManager } from './notebook'
 
 const log = createLogger({ name: 'Socket' })
@@ -98,10 +98,10 @@ export class SocketManager implements ISocketManager {
     }
 
     private onCellRun = (socket: SocketIO.Socket) => {
-        return async (cell: ICodeCell, kernels?: IKernelNames) => {
+        return async (cell: ICodeCell, kernelInfo?: IKernelInfo) => {
             try {
-                if (isParameterCell(cell) && kernels) {
-                    await this.backendManager.executeParameter(cell, kernels)
+                if (isParameterCell(cell) && kernelInfo) {
+                    let res = await this.backendManager.executeParameter(cell, kernelInfo)
                 } else {
                     await this.backendManager.execute(cell, msg => {
                         socket.emit('cell.run.ok', { msg, cell })
