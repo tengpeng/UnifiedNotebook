@@ -1,5 +1,5 @@
 import React from 'react'
-import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs } from 'common/lib/types.js'
+import { ICellViewModel, INotebookViewModel, ICellState, CellType, IKernelSpecs, isParameterCell } from 'common/lib/types.js'
 import { Output } from './output'
 import { Input } from './input'
 import cloneDeep from 'lodash/cloneDeep'
@@ -8,6 +8,7 @@ import { IState } from '../store/reducer'
 import { connect } from 'react-redux'
 import client from '../socket'
 import ImportExpose from './import-expose'
+import { getNotebookKernels } from '../store/utils'
 
 interface Props extends IState {
     cellVM: ICellViewModel
@@ -103,7 +104,12 @@ const Cell: React.FC<Props> = ({ cellVM, notebookVM, kernels }) => {
     }
 
     const runCell = () => {
-        client.emit('cell.run', cellVM.cell)
+        if (isParameterCell(cellVM.cell)) {
+            let kernels = getNotebookKernels(notebookVM)
+            client.emit('cell.run', cellVM.cell, kernels)
+        } else {
+            client.emit('cell.run', cellVM.cell)
+        }
     }
 
     const onInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>, cellVM: ICellViewModel) => {

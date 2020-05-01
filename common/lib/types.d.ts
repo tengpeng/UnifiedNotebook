@@ -105,6 +105,7 @@ export interface IKernelSpec {
     backend: string;
 }
 export declare type IKernelSpecs = IKernelSpec[];
+export declare type IKernelNames = string[];
 export interface IExposeVarPayload {
     exposeVar: string;
     exposeCell: ICodeCell;

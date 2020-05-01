@@ -100,17 +100,15 @@ var SocketManager = /** @class */ (function () {
             }); };
         };
         this.onCellRun = function (socket) {
-            return function (cell) { return __awaiter(_this, void 0, void 0, function () {
+            return function (cell, kernels) { return __awaiter(_this, void 0, void 0, function () {
                 var error_1;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             _a.trys.push([0, 5, , 6]);
-                            if (!types_1.isParameterCell(cell)) return [3 /*break*/, 2];
-                            // todo
-                            return [4 /*yield*/, this.backendManager.executeParameter(cell)];
+                            if (!(types_1.isParameterCell(cell) && kernels)) return [3 /*break*/, 2];
+                            return [4 /*yield*/, this.backendManager.executeParameter(cell, kernels)];
                         case 1:
-                            // todo
                             _a.sent();
                             return [3 /*break*/, 4];
                         case 2: return [4 /*yield*/, this.backendManager.execute(cell, function (msg) {

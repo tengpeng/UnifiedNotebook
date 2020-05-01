@@ -7,7 +7,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: '4e698ede-c098-4d84-bbce-516d448c4f97',
                 type: CellType.CODE,
                 source: '#result example\n\n1 + 1',
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -34,7 +34,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: '9ef575ed-7882-4233-829a-fbbd58eee0e1',
                 type: CellType.CODE,
                 source: "import pandas as pd\npd.options.display.html.table_schema = True # Data Explorer On!\npd.options.display.max_rows = 4\ndf = pd.read_csv('https://gist.githubusercontent.com/rgbkrk/a7984a8788a73e2afb8fd4b89c8ec6de/raw/db8d1db9f878ed448c3cac3eb3c9c0dc5e80891e/2015.csv')\ndf",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -48,7 +48,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: '386bce8a-47e0-4f25-8bd4-04cc0a129ccb',
                 type: CellType.CODE,
                 source: "# JSON example\n\nfrom IPython.display import JSON\n\nJSON({'a': [1, 2, 3, 4,], 'b': {'inner1': 'helloworld', 'inner2': 'foobar'}})",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -62,7 +62,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: 'e068c6bb-605c-4933-be67-b0c562eb87e2',
                 type: CellType.CODE,
                 source: "#stream example\n\nimport time\n\nprint('start')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('processing')\ntime.sleep(1)\nprint('finish')",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -76,7 +76,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: '0daedc21-1578-4381-87f1-ade64e869983',
                 type: CellType.CODE,
                 source: "# error example \n\n This will throw an error",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -90,7 +90,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: 'a4b70e5a-b8a2-454f-b7fc-ef5953873798',
                 type: CellType.CODE,
                 source: "# display example\n\nfrom IPython.display import display, Image, SVG, Math, YouTubeVideo\n\nImage(url='https://www.python.org/static/favicon.ico')",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -132,7 +132,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: 'acb1335d-b2a5-4d77-81cf-4f4a9c9cad99',
                 type: CellType.CODE,
                 source: "# data transfer example\n\nimport pandas as pd\n\ndf = pd.read_csv('https://gist.githubusercontent.com/rgbkrk/a7984a8788a73e2afb8fd4b89c8ec6de/raw/db8d1db9f878ed448c3cac3eb3c9c0dc5e80891e/2015.csv')\ndataToExpose = df.to_dict()\nprint('lenth: ', len(dataToExpose['Country']), 'firstCountry: ', dataToExpose['Country'][0])\nprint('finish')",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -160,7 +160,7 @@ export function exampleCells(): { cells: ICell[] } {
                 id: 'd55c0afd-dfb8-4e49-8139-0336c85484d0',
                 type: CellType.MARKDOWN,
                 source: "#### md math example\n\n$\\sigma_U \\sim \\mathrm{Normal}(0, \\Theta_U^2)$",
-                language: 'python',
+                language: 'python3',
                 backend: 'Jupyter',
                 metadata: {
                     scrollbar: false,
@@ -179,8 +179,8 @@ export function parameterExampleCells(): { cells: ICell[] } {
         cells: [{
             id: '646ace57-6412-49d1-95aa-a44846fa401a',
             type: CellType.PARAMETER,
-            source: '#parameter example\n\nfname = "oliver"',
-            language: 'python',
+            source: '//parameter example\n\nfname = "oliver"',
+            language: 'javascript',
             backend: 'Jupyter',
             metadata: {
                 scrollbar: false,
@@ -193,7 +193,7 @@ export function parameterExampleCells(): { cells: ICell[] } {
             id: '3df31bb7-49d2-4632-8d8b-246204313b7e',
             type: CellType.CODE,
             source: '#parameter example\n\nprint(fname)',
-            language: 'python',
+            language: 'python3',
             backend: 'Jupyter',
             metadata: {
                 scrollbar: false,

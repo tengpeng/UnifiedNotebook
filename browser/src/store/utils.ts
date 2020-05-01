@@ -1,4 +1,4 @@
-import { ICell, INotebookViewModel } from 'common/lib/types'
+import { ICell, INotebookViewModel, IKernelNames } from 'common/lib/types'
 import { ICellState, ICodeCell, ICellViewModel, CellType } from 'common/lib/types'
 import { v4 as uuid } from 'uuid'
 import { store } from './index'
@@ -56,4 +56,11 @@ export const createEmptyCodeCellVM = (id?: string): ICellViewModel => {
 /* -------------------------------------------------------------------------- */
 export const cloneNotebookVM = (notebookVM: INotebookViewModel) => {
     return cloneDeep(notebookVM)
+}
+
+export const getNotebookKernels = (notebookVM: INotebookViewModel): IKernelNames => {
+    let cells = notebookVM.notebook.cells
+    let kernels = cells.map(cell => cell.cell.language) // language in jupyter means kernel name
+    kernels = Array.from(new Set(kernels))
+    return kernels
 }
