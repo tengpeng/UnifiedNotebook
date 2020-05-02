@@ -179,7 +179,7 @@ export function parameterExampleCells(): { cells: ICell[] } {
         cells: [{
             id: '646ace57-6412-49d1-95aa-a44846fa401a',
             type: CellType.PARAMETER,
-            source: '//parameter example\n\nfname = "oliver"',
+            source: "myList = ['oliver', 'alice', 'troy']\ndelay = 1",
             language: 'javascript',
             backend: 'Jupyter',
             metadata: {
@@ -192,7 +192,7 @@ export function parameterExampleCells(): { cells: ICell[] } {
         }, {
             id: '3df31bb7-49d2-4632-8d8b-246204313b7e',
             type: CellType.CODE,
-            source: '#parameter example\n\nprint(fname)',
+            source: "from time import sleep\n\nfor name in myList:\n  sleep(float(delay))\n  print(name)\n",
             language: 'python3',
             backend: 'Jupyter',
             metadata: {
