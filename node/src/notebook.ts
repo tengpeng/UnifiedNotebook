@@ -1,9 +1,9 @@
-import { INotebookJSON, INotebookCallback, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput } from 'common/lib/types'
+import { INotebookJSON, INotebookCallback, ICell, isExecuteResultOutput, isStatusOutput, isStreamOutput, IResponse, ICellOutput, IExecuteResultOutput, IStatusOutput, IStreamOutput, isErrorOutput, IErrorOutput, isClearOutput, IClearOutput, isParameterCell, ICodeCell, IKernelInfo } from 'common/lib/types'
 import jsonfile from 'jsonfile'
 import path from 'path'
 import { createLogger } from 'bunyan'
 import { BackendManager } from './backend'
-import cloneDeep from 'lodash/cloneDeep'
+import uniqBy from 'lodash/uniqBy'
 
 const log = createLogger({ name: 'NotebookManager' })
 
@@ -47,6 +47,15 @@ export class NotebookManager implements INotebookManager {
         cell.outputs.push(msg)
     }
 
+    private getNotebookKernelInfo(cells: ICodeCell[]): IKernelInfo {
+        let info = cells.map(cell => ({
+            language: cell.language,
+            backend: cell.backend
+        }))
+        info = uniqBy(info, 'language')
+        return info
+    }
+
     // read notebook json file
     async loadNotebook(url: string) {
         log.info('Load notebook')
@@ -74,22 +83,29 @@ export class NotebookManager implements INotebookManager {
         let cells = this.notebookJson.cells
         let length = cells.length
         let finish = false
+        let kernelInfo = this.getNotebookKernelInfo(cells)
         log.info('Notebook cell length: ', length)
         for (let [index, cell] of Object.entries(cells)) {
-            await this.backendManager.execute(cell, (output: ICellOutput) => {
-                if (silent) {
-                    // ignore
-                } else {
-                    this.handleRunCellSuccess({ msg: output, cell })
-                }
-            })
+            if (isParameterCell(cell)) {
+                // parameter cell
+                await this.backendManager.executeParameter(cell, kernelInfo)
+            } else {
+                // code cell
+                await this.backendManager.execute(cell, (output: ICellOutput) => {
+                    if (silent) {
+                        // ignore
+                    } else {
+                        this.handleRunCellSuccess({ msg: output, cell })
+                    }
+                })
+            }
             log.info(`Executing cell: ${Number(index) + 1} / ${length}`)
             notebookCallback({ current: Number(index), length, finish })
         }
         finish = true
         notebookCallback({ current: length - 1, length, finish })
         log.info(`Executing finished`)
-        log.info(`Notebook cells: `, cells)
+        log.info(`Notebook cells: `, JSON.stringify(cells, null, 1))
         return true
     }
 }
